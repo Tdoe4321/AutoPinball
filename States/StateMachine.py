@@ -1,6 +1,7 @@
 import rospy
 import smach
 
+from States.normal_play import *
 
 def createStateMachine():
     rospy.init_node('AutoPinball_StateMachine')
@@ -10,13 +11,11 @@ def createStateMachine():
     
     # Open the container
     with sm_PINBALL:
-
         smach.StateMachine.add('NORMAL_PLAY', Normal_Play(), transitions={'ball_lost':'game_over'})
 
 
     # Execute SMACH plan
     outcome = sm_PINBALL.execute()
-
 
 
 def main():
