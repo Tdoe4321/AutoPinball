@@ -34,7 +34,7 @@ ros::NodeHandle nh;
 std_msgs::Int32 int_msg;
 ros::Publisher switch_pub("switch_triggered", &int_msg);
 
-
+//TODO: Possibly add callback for each flipper - then I could change to bool
 void flip_callback(const std_msgs::Int32& flipper){
   // 1 = left_flipper ON, 2 = right_flipper ON, -1 = left_flipper OFF, -2 = right_flipper OFF
   if (flipper.data == 1){
@@ -51,6 +51,7 @@ void flip_callback(const std_msgs::Int32& flipper){
   }
 }
 
+//TODO: Possibly add callback for each light - then I could change to bool
 void light_on_callback(const std_msgs::Int32& light){
   if(light.data == TopLight1){
     digitalWrite(TopLight1, HIGH);
@@ -100,32 +101,32 @@ ros::Subscriber<std_msgs::Int32> light_on_sub("light_on", &light_on_callback);
 ros::Subscriber<std_msgs::Int32> light_off_sub("light_off", &light_off_callback);
 
 void checkSwitches(){
-  if (digitalRead(TopSwitch1)){
+  if (!digitalRead(TopSwitch1)){
     int_msg.data = TopSwitch1;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
-  if (digitalRead(TopSwitch2)){
+  if (!digitalRead(TopSwitch2)){
     int_msg.data = TopSwitch2;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
-  if (digitalRead(MidSwitch1)){
+  if (!digitalRead(MidSwitch1)){
     int_msg.data = MidSwitch1;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
-  if (digitalRead(MidSwitch2)){
+  if (!digitalRead(MidSwitch2)){
     int_msg.data = MidSwitch2;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
-  if (digitalRead(BotSwitch1)){
+  if (!digitalRead(BotSwitch1)){
     int_msg.data = BotSwitch1;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
-  if (digitalRead(BotSwitch2)){
+  if (!digitalRead(BotSwitch2)){
     int_msg.data = BotSwitch2;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
@@ -143,20 +144,21 @@ void setup(){
   pinMode(LeftFlipper, OUTPUT);
   pinMode(RightFlipper, OUTPUT);
 
-  pinMode(TopSwitch1, INPUT);
-  pinMode(TopSwitch2, INPUT);
-  pinMode(MidSwitch1, INPUT);
-  pinMode(MidSwitch2, INPUT);
-  pinMode(BotSwitch1, INPUT);
-  pinMode(BotSwitch2, INPUT);
+  pinMode(TopSwitch1, INPUT_PULLUP);
+  pinMode(TopSwitch2, INPUT_PULLUP);
+  pinMode(MidSwitch1, INPUT_PULLUP);
+  pinMode(MidSwitch2, INPUT_PULLUP);
+  pinMode(BotSwitch1, INPUT_PULLUP);
+  pinMode(BotSwitch2, INPUT_PULLUP);
   
   nh.initNode();
   nh.advertise(switch_pub);
   nh.subscribe(flip_sub);
+  nh.subscribe(light_on_sub);
+  nh.subscribe(light_off_sub);
 }
 
 void loop(){
   checkSwitches();
   nh.spinOnce();
-  delayMicroseconds(1); // Do I need this?
 }
