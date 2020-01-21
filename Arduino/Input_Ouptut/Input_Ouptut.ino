@@ -31,6 +31,7 @@
 ros::NodeHandle nh;
 
 // ROS Published messages
+//TODO: Possibly add a publisher for each switch triggered
 std_msgs::Int32 int_msg;
 ros::Publisher switch_pub("switch_triggered", &int_msg);
 
@@ -51,47 +52,14 @@ void flip_callback(const std_msgs::Int32& flipper){
   }
 }
 
-//TODO: Possibly add callback for each light - then I could change to bool
+// Turn on whatever int comes in
 void light_on_callback(const std_msgs::Int32& light){
-  if(light.data == TopLight1){
-    digitalWrite(TopLight1, HIGH);
-  }
-  else if(light.data == TopLight2){
-    digitalWrite(TopLight2, HIGH);
-  }
-  else if(light.data == MidLight1){
-    digitalWrite(MidLight1, HIGH);
-  }
-  else if(light.data == MidLight2){
-    digitalWrite(MidLight2, HIGH);
-  }
-  else if(light.data == BotLight1){
-    digitalWrite(BotLight1, HIGH);
-  }
-  else if(light.data == BotLight2){
-    digitalWrite(BotLight2, HIGH);
-  }
+  digitalWrite(light.data, HIGH);
 }
 
+// Turn off whatever int comes in
 void light_off_callback(const std_msgs::Int32& light){
-  if(light.data == TopLight1){
-    digitalWrite(TopLight1, LOW);
-  }
-  else if(light.data == TopLight2){
-    digitalWrite(TopLight2, LOW);
-  }
-  else if(light.data == MidLight1){
-    digitalWrite(MidLight1, LOW);
-  }
-  else if(light.data == MidLight2){
-    digitalWrite(MidLight2, LOW);
-  }
-  else if(light.data == BotLight1){
-    digitalWrite(BotLight1, LOW);
-  }
-  else if(light.data == BotLight2){
-    digitalWrite(BotLight2, LOW);
-  }
+  digitalWrite(light.data, LOW);
 }
 
 
@@ -100,6 +68,7 @@ ros::Subscriber<std_msgs::Int32> flip_sub("flip_flipper", &flip_callback);
 ros::Subscriber<std_msgs::Int32> light_on_sub("light_on", &light_on_callback);
 ros::Subscriber<std_msgs::Int32> light_off_sub("light_off", &light_off_callback);
 
+//TODO: Possibly add publisher for each switch
 void checkSwitches(){
   if (!digitalRead(TopSwitch1)){
     int_msg.data = TopSwitch1;
