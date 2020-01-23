@@ -8,11 +8,11 @@
 #include <std_msgs/Int32.h>
 
 // Light Outputs
-#define TopLight1 10
+#define TopLight1 5
 #define TopLight2 11
-#define MidLight1 15
+#define MidLight1 4
 #define MidLight2 16
-#define BotLight1 20
+#define BotLight1 3
 #define BotLight2 21
 
 // Flipper Outputs
@@ -20,11 +20,11 @@
 #define RightFlipper 2
 
 // Switch Inputs
-#define TopSwitch1 25
+#define TopSwitch1 11
 #define TopSwitch2 26
-#define MidSwitch1 30
+#define MidSwitch1 12
 #define MidSwitch2 31
-#define BotSwitch1 35
+#define BotSwitch1 13
 #define BotSwitch2 36
 
 // ROS Node Handle
@@ -75,31 +75,37 @@ void checkSwitches(){
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
+  /*
   if (!digitalRead(TopSwitch2)){
     int_msg.data = TopSwitch2;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
+  */
   if (!digitalRead(MidSwitch1)){
     int_msg.data = MidSwitch1;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
+  /*
   if (!digitalRead(MidSwitch2)){
     int_msg.data = MidSwitch2;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
+  */
   if (!digitalRead(BotSwitch1)){
     int_msg.data = BotSwitch1;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
+  /*
   if (!digitalRead(BotSwitch2)){
     int_msg.data = BotSwitch2;
     switch_pub.publish(&int_msg);
     nh.spinOnce();
   }
+  */
 }
 
 void setup(){
