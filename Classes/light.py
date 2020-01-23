@@ -1,5 +1,7 @@
 class Light:
     """ Class to hold all light outputs on the field """
     on = False
-    time_since_last_on = -1
-    time_on = 0
+    last_time_on = -1.0
+    pin = -1
+    general_light_on_time = 0.1 # Typically we want to turn the light on and off when a switch is triggered
+    override_light = False # Sometimes we want to not use the default light off time
