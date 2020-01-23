@@ -69,6 +69,8 @@ ros::Subscriber<std_msgs::Int32> light_on_sub("light_on", &light_on_callback);
 ros::Subscriber<std_msgs::Int32> light_off_sub("light_off", &light_off_callback);
 
 //TODO: Possibly add publisher for each switch
+//TODO: Also - only publish on switch changes - i.e. only from LOW -> HIGH or HIGH -> LOW
+// That means I will have to track the previous switch states
 void checkSwitches(){
   if (!digitalRead(TopSwitch1)){
     int_msg.data = TopSwitch1;
