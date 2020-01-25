@@ -23,11 +23,7 @@ class Normal_Play(smach.State):
         self.light_on_pub = rospy.Publisher("light_on", Int32, queue_size=10)
         self.light_off_pub = rospy.Publisher("light_off", Int32, queue_size=10)
         
-        self.playfield = None
-
     def execute(self, userdata):
         print("Normal_play")
         while(True):
-            self.light_on_pub.publish(1)
-            rospy.loginfo("Hello World")
             return 'ball_lost'
