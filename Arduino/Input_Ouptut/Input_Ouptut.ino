@@ -6,34 +6,47 @@
 
 #include <ros.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/Bool.h>
 
 // Light Outputs
-#define TopLight1 5
-#define TopLight2 11
-#define MidLight1 4
-#define MidLight2 16
-#define BotLight1 3
-#define BotLight2 21
+#define TopLight0 3
+#define TopLight1 30
+#define MidLight0 4
+#define MidLight1 16
+#define BotLight0 5
+#define BotLight1 21
 
 // Flipper Outputs
 #define LeftFlipper 1
 #define RightFlipper 2
 
 // Switch Inputs
-#define TopSwitch1 11
-#define TopSwitch2 26
-#define MidSwitch1 12
-#define MidSwitch2 31
-#define BotSwitch1 13
-#define BotSwitch2 36
+#define TopSwitch0 11
+#define TopSwitch1 26
+#define MidSwitch0 12
+#define MidSwitch1 31
+#define BotSwitch0 13
+#define BotSwitch1 36
+
+uint8_t TopSwitch0Last = 0;
+uint8_t TopSwitch1Last = 0;
+uint8_t MidSwitch0Last = 0;
+uint8_t MidSwitch1Last = 0;
+uint8_t BotSwitch0Last = 0;
+uint8_t BotSwitch1Last = 0;
 
 // ROS Node Handle
 ros::NodeHandle nh;
 
 // ROS Published messages
-//TODO: Possibly add a publisher for each switch triggered
-std_msgs::Int32 int_msg;
-ros::Publisher switch_pub("switch_triggered", &int_msg);
+std_msgs::Bool empty_msg;
+
+ros::Publisher switch_top_0_pub("switch_top_0_triggered", &empty_msg);
+ros::Publisher switch_top_1_pub("switch_top_1_triggered", &empty_msg);
+ros::Publisher switch_mid_0_pub("switch_mid_0_triggered", &empty_msg);
+ros::Publisher switch_mid_1_pub("switch_mid_1_triggered", &empty_msg);
+ros::Publisher switch_bot_0_pub("switch_bot_0_triggered", &empty_msg);
+ros::Publisher switch_bot_1_pub("switch_bot_1_triggered", &empty_msg);
 
 //TODO: Possibly add callback for each flipper - then I could change to bool
 void flip_callback(const std_msgs::Int32& flipper){
@@ -68,71 +81,80 @@ ros::Subscriber<std_msgs::Int32> flip_sub("flip_flipper", &flip_callback);
 ros::Subscriber<std_msgs::Int32> light_on_sub("light_on", &light_on_callback);
 ros::Subscriber<std_msgs::Int32> light_off_sub("light_off", &light_off_callback);
 
-//TODO: Possibly add publisher for each switch
-//TODO: Also - only publish on switch changes - i.e. only from LOW -> HIGH or HIGH -> LOW
-// That means I will have to track the previous switch states
+// Check all switches, then publish if they are triggered
 void checkSwitches(){
-  if (!digitalRead(TopSwitch1)){
-    int_msg.data = TopSwitch1;
-    switch_pub.publish(&int_msg);
+  int8_t curTopSwitch0 = digitalRead(TopSwitch0);
+  int8_t curTopSwitch1 = digitalRead(TopSwitch1);
+  int8_t curMidSwitch0 = digitalRead(MidSwitch0);
+  int8_t curMidSwitch1 = digitalRead(MidSwitch1);
+  int8_t curBotSwitch0 = digitalRead(BotSwitch0);
+  int8_t curBotSwitch1 = digitalRead(BotSwitch1);
+  
+  if (!curTopSwitch0 && curTopSwitch0 != TopSwitch0Last){
+    switch_top_0_pub.publish(&empty_msg);
     nh.spinOnce();
   }
-  /*
-  if (!digitalRead(TopSwitch2)){
-    int_msg.data = TopSwitch2;
-    switch_pub.publish(&int_msg);
+  if (!curTopSwitch1 && curTopSwitch1 != TopSwitch1Last){
+    switch_top_1_pub.publish(&empty_msg);
     nh.spinOnce();
   }
-  */
-  if (!digitalRead(MidSwitch1)){
-    int_msg.data = MidSwitch1;
-    switch_pub.publish(&int_msg);
+  if (!curMidSwitch0 && curMidSwitch0 != MidSwitch0Last){
+    switch_mid_0_pub.publish(&empty_msg);
     nh.spinOnce();
   }
-  /*
-  if (!digitalRead(MidSwitch2)){
-    int_msg.data = MidSwitch2;
-    switch_pub.publish(&int_msg);
+  if (!curMidSwitch1 && curMidSwitch1 != MidSwitch1Last){
+    switch_mid_1_pub.publish(&empty_msg);
     nh.spinOnce();
   }
-  */
-  if (!digitalRead(BotSwitch1)){
-    int_msg.data = BotSwitch1;
-    switch_pub.publish(&int_msg);
+  if (!curBotSwitch0 && curBotSwitch0 != BotSwitch0Last){
+    switch_bot_0_pub.publish(&empty_msg);
     nh.spinOnce();
   }
-  /*
-  if (!digitalRead(BotSwitch2)){
-    int_msg.data = BotSwitch2;
-    switch_pub.publish(&int_msg);
+  if (!curBotSwitch1 && curBotSwitch1 != BotSwitch1Last){
+    switch_bot_1_pub.publish(&empty_msg);
     nh.spinOnce();
   }
-  */
+
+  TopSwitch0Last = curTopSwitch0;
+  TopSwitch0Last = curTopSwitch0;
+  MidSwitch0Last = curMidSwitch0;
+  MidSwitch0Last = curMidSwitch0;
+  BotSwitch0Last = curBotSwitch0;
+  BotSwitch0Last = curBotSwitch0;
 }
 
 void setup(){
   // Setutp Inputs annd outputs
+  pinMode(TopLight0, OUTPUT);
   pinMode(TopLight1, OUTPUT);
-  pinMode(TopLight2, OUTPUT);
+  pinMode(MidLight0, OUTPUT);
   pinMode(MidLight1, OUTPUT);
-  pinMode(MidLight2, OUTPUT);
+  pinMode(BotLight0, OUTPUT);
   pinMode(BotLight1, OUTPUT);
-  pinMode(BotLight2, OUTPUT);
   pinMode(LeftFlipper, OUTPUT);
   pinMode(RightFlipper, OUTPUT);
 
+  pinMode(TopSwitch0, INPUT_PULLUP);
   pinMode(TopSwitch1, INPUT_PULLUP);
-  pinMode(TopSwitch2, INPUT_PULLUP);
+  pinMode(MidSwitch0, INPUT_PULLUP);
   pinMode(MidSwitch1, INPUT_PULLUP);
-  pinMode(MidSwitch2, INPUT_PULLUP);
+  pinMode(BotSwitch0, INPUT_PULLUP);
   pinMode(BotSwitch1, INPUT_PULLUP);
-  pinMode(BotSwitch2, INPUT_PULLUP);
   
   nh.initNode();
-  nh.advertise(switch_pub);
+  
+  nh.advertise(switch_top_0_pub);
+  nh.advertise(switch_top_1_pub);
+  nh.advertise(switch_mid_0_pub);
+  nh.advertise(switch_mid_1_pub);
+  nh.advertise(switch_bot_0_pub);
+  nh.advertise(switch_bot_1_pub);
+  
   nh.subscribe(flip_sub);
   nh.subscribe(light_on_sub);
   nh.subscribe(light_off_sub);
+
+  empty_msg.data = true;
 }
 
 void loop(){

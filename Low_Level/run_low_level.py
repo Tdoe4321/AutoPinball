@@ -5,6 +5,7 @@ from playfield import Playfield
 
 import rospy
 from std_msgs.msg import Int32
+from std_msgs.msg import Bool
 
 def turn_on(light):
     light.on = True
@@ -15,33 +16,29 @@ def turn_off(light):
     light.on = False
     light_off_pub.publish(light.pin)
 
-# TODO: Possibly have separate callbacks for each switch
-def callback(data):
-    # This switcher is what connects what happens when a switch is triggered to what lights are turned on
-    # However, this will be unnecessary if I implement a callback for each switch
-    if (data.data == 11):
-        turn_on(myPlay.lights["top"][0])
-        # Do other things, score, etc.
-    elif (data.data == 12):
-        turn_on(myPlay.lights["mid"][0])
-        # Do other things, score, etc.
-    elif (data.data == 13):
-        turn_on(myPlay.lights["bot"][0])
-        # Do other things, score, etc.
+def switch_top_0(data):
+    turn_on(myPlay.lights["top"][0])
+    myPlay.switches["top"][0].num_times_triggered += 1
+    # Do other things, score, etc.
     
-    # I won't need this if I have individual callbacks, but for now, I need to find the switch
-    # that goes with the pin triggered:
-    # ALSO: this doesn't account for debouncing yet
-    for row in myPlay.switches: # for every row in the playfield (top, mid, bot)...
-        for curr_switch in myPlay.switches[row]:
-            if curr_switch.pin == data.data:
-                curr_switch.num_times_triggered += 1
-                return
+def switch_mid_0(data):
+    turn_on(myPlay.lights["mid"][0])
+    myPlay.switches["mid"][0].num_times_triggered += 1
+    # Do other things, score, etc.
+
+def switch_bot_0(data):
+    turn_on(myPlay.lights["bot"][0])
+    myPlay.switches["bot"][0].num_times_triggered += 1
+    # Do other things, score, etc.
 
 myPlay = Playfield()
 
 rospy.init_node('low_level')
-switch_sub = rospy.Subscriber("switch_triggered", Int32, callback)
+
+switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
+switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)
+switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
+
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
 light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
 
