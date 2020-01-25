@@ -7,13 +7,13 @@ from imutils.video import VideoStream
 import imutils
 
 # Color bounds
-colorLower = (29,86,6)
-colorUpper = (64,255,255)
+colorLower = (10,50,60)
+colorUpper = (70,150,120)
 # Length of line path to draw
 pts = deque(maxlen=32)
 
 # Which video source
-vs = cv2.VideoCapture(0)
+vs = cv2.VideoCapture(2)
 
 while True:
     # Grab Video Frame
