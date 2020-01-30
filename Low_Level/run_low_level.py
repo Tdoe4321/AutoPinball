@@ -1,11 +1,17 @@
+# Source correct files
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../Classes') # Still is not how I should be doing this, but...it works
 
+# Status of playfield
 from playfield import Playfield
 
+# Ros stuff
 import rospy
 from std_msgs.msg import Int32
 from std_msgs.msg import Bool
+
+# Time and scheduling
+import sched, time
 
 def turn_on(light):
     light.on = True
@@ -17,7 +23,9 @@ def turn_off(light):
     light_off_pub.publish(light.pin)
 
 def switch_top_0(data):
-    turn_on(myPlay.lights["top"][0])
+    light = myPlay.lights["top"][0]
+    turn_on(light)
+    schedule.enter(light.general_light_on_time, 1, turn_off, argument=(light,))
     myPlay.switches["top"][0].num_times_triggered += 1
     # Do other things, score, etc.
     
@@ -42,6 +50,8 @@ switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
 light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
 
+schedule = sched.scheduler(time.time, time.sleep)
+
 if __name__ == "__main__":
     # Setup all the pins for the switches on the playfield
     myPlay.switches["top"][0].pin = 11
@@ -53,6 +63,11 @@ if __name__ == "__main__":
     myPlay.lights["mid"][0].pin = 4
     myPlay.lights["bot"][0].pin = 5
 
+    switch_top_0(True) # This is a test
+    while not rospy.is_shutdown():
+        schedule.run()
+
+    '''
     # This checks for lights that should be shutdown
     while not rospy.is_shutdown():
         for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
@@ -64,3 +79,4 @@ if __name__ == "__main__":
                     turn_off(curr_light)
 
                 i += 1 # incrementing index
+    '''
