@@ -13,19 +13,41 @@ from std_msgs.msg import Bool
 # Time and scheduling
 import sched, time
 
+# Capture ctl + c
+import signal
+
 def turn_on(light):
+    if light.override_light == "Hold" and light.on:
+        return
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
     light_on_pub.publish(light.pin)
+    if light.override_light is None:
+        schedule.enter(light.general_light_on_time, 1, turn_off, argument=(light,)) 
+    elif light.override_light == "Blink_Slow":
+        schedule.enter(1, 1, turn_off, argument=(light,))
+    elif light.override_light == "Blink_Med":
+        schedule.enter(0.6, 1, turn_off, argument=(light,))
+    elif light.override_light == "Blink_Fast":
+        schedule.enter(0.3, 1, turn_off, argument=(light,))
+
+    #print("on")
 
 def turn_off(light):
     light.on = False
     light_off_pub.publish(light.pin)
+    if light.override_light == "Blink_Slow":
+        schedule.enter(1, 1, turn_on, argument=(light,))
+    elif light.override_light == "Blink_Med":
+        schedule.enter(0.6, 1, turn_on, argument=(light,))
+    elif light.override_light == "Blink_Fast":
+        schedule.enter(0.3, 1, turn_on, argument=(light,))
+
+    #print("off")
 
 def switch_top_0(data):
     light = myPlay.lights["top"][0]
     turn_on(light)
-    schedule.enter(light.general_light_on_time, 1, turn_off, argument=(light,))
     myPlay.switches["top"][0].num_times_triggered += 1
     # Do other things, score, etc.
     
@@ -39,6 +61,13 @@ def switch_bot_0(data):
     myPlay.switches["bot"][0].num_times_triggered += 1
     # Do other things, score, etc.
 
+def signal_handler(sig, frame):
+        print('\nExiting...')
+        for event in schedule.queue:
+            schedule.cancel(event)
+
+signal.signal(signal.SIGINT, signal_handler)
+
 myPlay = Playfield()
 
 rospy.init_node('low_level')
@@ -49,6 +78,8 @@ switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0
 
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
 light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
+
+switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
 
 schedule = sched.scheduler(time.time, time.sleep)
 
@@ -63,6 +94,7 @@ if __name__ == "__main__":
     myPlay.lights["mid"][0].pin = 4
     myPlay.lights["bot"][0].pin = 5
 
+    #myPlay.lights["top"][0].override_light = "Hold"
     switch_top_0(True) # This is a test
     while not rospy.is_shutdown():
         schedule.run()
