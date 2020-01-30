@@ -9,12 +9,17 @@ from playfield import Playfield
 import rospy
 from std_msgs.msg import Int32
 from std_msgs.msg import Bool
+from pinball_messages.srv import getData
 
 # Time and scheduling
 import sched, time
 
 # Capture ctl + c
 import signal
+
+def handle_getData(req):
+    print(req.request)
+    return 5
 
 def turn_on(light):
     if light.override_light == "Hold" and light.on:
@@ -76,6 +81,8 @@ signal.signal(signal.SIGINT, signal_handler)
 myPlay = Playfield()
 
 rospy.init_node('low_level')
+
+data_server = rospy.Service('get_data', getData, handle_getData)
 
 switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
 switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)

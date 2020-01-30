@@ -2,6 +2,7 @@ import rospy
 import smach
 
 from std_msgs.msg import Int32
+from pinball_messages.srv import getData
 
 from Classes import playfield
 
@@ -25,5 +26,14 @@ class Normal_Play(smach.State):
         
     def execute(self, userdata):
         print("Normal_play")
+
+        rospy.wait_for_service('get_data')
+
+        try:
+            getData_call = rospy.ServiceProxy('get_data', getData)
+            responce = getData_call("Hello")
+            print(responce.data)
+        except rospy.ServiceException, e:
+            print("Service call failed: %s", e)
         while(True):
             return 'ball_lost'
