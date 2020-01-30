@@ -66,6 +66,11 @@ def signal_handler(sig, frame):
         for event in schedule.queue:
             schedule.cancel(event)
 
+        # Turn off all lights
+        for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
+            for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
+                turn_off(curr_light)
+
 signal.signal(signal.SIGINT, signal_handler)
 
 myPlay = Playfield()
@@ -94,21 +99,10 @@ if __name__ == "__main__":
     myPlay.lights["mid"][0].pin = 4
     myPlay.lights["bot"][0].pin = 5
 
-    #myPlay.lights["top"][0].override_light = "Hold"
-    switch_top_0(True) # This is a test
+    # Make sure everything is off at startup
+    for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
+        for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
+            turn_off(curr_light)
+    
     while not rospy.is_shutdown():
         schedule.run()
-
-    '''
-    # This checks for lights that should be shutdown
-    while not rospy.is_shutdown():
-        for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
-            i = 0 # Tracking index
-            for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-                # if the light is on AND we aren't overriding it AND it's been longer than the set time...
-                if curr_light.on and not curr_light.override_light and (rospy.get_rostime().to_sec() - curr_light.last_time_on) > curr_light.general_light_on_time:
-                    print("row: " + row + ", light: " + str(i) + " Has been turned off")
-                    turn_off(curr_light)
-
-                i += 1 # incrementing index
-    '''
