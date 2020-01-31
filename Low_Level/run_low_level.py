@@ -10,6 +10,7 @@ import rospy
 from std_msgs.msg import Int32
 from std_msgs.msg import Bool
 from pinball_messages.srv import getData
+from pinball_messages.msg import override_light
 
 # Time and scheduling
 import sched, time
@@ -19,11 +20,18 @@ import signal
 
 def handle_getData(req):
     print(req.request)
-    return 5
+    return 5 # Have a lookup table for information
+
+def handle_override_light(override):
+    light = myPlay.lights[override.row][override.column]
+    if override.override == "None":
+        light.override_light = None
+        turn_off(light)
+    else:
+        light.override_light = override.override
+        turn_on(light)
 
 def turn_on(light):
-    if light.override_light == "Hold" and light.on:
-        return
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
     light_on_pub.publish(light.pin)
@@ -66,7 +74,7 @@ def switch_bot_0(data):
     myPlay.switches["bot"][0].num_times_triggered += 1
     # Do other things, score, etc.
 
-def signal_handler(sig, frame):
+def signal_handler():
         print('\nExiting...')
         for event in schedule.queue:
             schedule.cancel(event)
@@ -74,15 +82,17 @@ def signal_handler(sig, frame):
         # Turn off all lights
         for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
             for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-                turn_off(curr_light)
+                light_off_pub.publish(curr_light.pin)
 
-signal.signal(signal.SIGINT, signal_handler)
 
 myPlay = Playfield()
 
 rospy.init_node('low_level')
+rospy.on_shutdown(signal_handler)
 
 data_server = rospy.Service('get_data', getData, handle_getData)
+
+override_light_sub = rospy.Subscriber("override_light", override_light, handle_override_light)
 
 switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
 switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)
@@ -90,8 +100,6 @@ switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0
 
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
 light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
-
-switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
 
 schedule = sched.scheduler(time.time, time.sleep)
 
@@ -109,7 +117,7 @@ if __name__ == "__main__":
     # Make sure everything is off at startup
     for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
         for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-            turn_off(curr_light)
+            light_off_pub.publish(curr_light.pin)
     
     while not rospy.is_shutdown():
         schedule.run()
