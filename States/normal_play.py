@@ -2,6 +2,7 @@ import rospy
 import smach
 
 from std_msgs.msg import Int32
+from std_msgs.msg import Int32MultiArray
 from pinball_messages.srv import get_light
 from pinball_messages.srv import get_switch
 from pinball_messages.msg import override_light
@@ -15,6 +16,12 @@ from Classes import switch
 import gamestate
 
 class Normal_Play(smach.State):
+    # Callback for when a new switch is hit
+    # This we will check this list against a dictionary to see
+    # If we should transition into a new state or 'mode'
+    def switch_callback(self, data):
+        print(data.data)
+
     # Callback for when score changes
     def score_callback(self, data):
         self.score = data.data
@@ -59,10 +66,13 @@ class Normal_Play(smach.State):
         self.get_switch_call = rospy.ServiceProxy('get_switch', get_switch)
 
         # Score & Bonus
-        self.score_subscriber = rospy.Subscriber("update_score", Int32, self.score_callback)
-        self.bonus_subscriber = rospy.Subscriber("update_bonus", Int32, self.bonus_callback)
+        self.score_sub = rospy.Subscriber("update_score", Int32, self.score_callback)
+        self.bonus_sub = rospy.Subscriber("update_bonus", Int32, self.bonus_callback)
         self.score = 0
         self.bonus = 0
+
+        # Switch list update
+        self.switch_list_sub = rospy.Subscriber("switch_list", Int32MultiArray, self.switch_callback)
 
     def execute(self, userdata):
         print("Normal_play")

@@ -8,6 +8,7 @@ from playfield import Playfield
 # Ros stuff
 import rospy
 from std_msgs.msg import Int32
+from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Bool
 from pinball_messages.srv import get_light, get_lightResponse
 from pinball_messages.srv import get_switch, get_switchResponse
@@ -18,6 +19,12 @@ import sched, time
 
 # Capture ctl + c
 import signal
+
+# Keeps the last five commands stored here so we can change mode if you get a sertain combo:
+def new_switch_hit(pin):
+    myPlay.switch_list.append(pin)
+    myPlay.switch_list.pop(0)
+    switch_list_pub.publish(data=myPlay.switch_list)
 
 # Publishes out new score value
 def update_score(score_to_add):
@@ -81,18 +88,26 @@ def turn_off(light):
 # Callback for each switch on the playfield...
 def switch_top_0(data):
     light = myPlay.lights["top"][0]
+    switch = myPlay.switches["top"][0]
     turn_on(light)
-    myPlay.switches["top"][0].num_times_triggered += 1
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
     # Do other things, score, etc.
     
 def switch_mid_0(data):
-    turn_on(myPlay.lights["mid"][0])
-    myPlay.switches["mid"][0].num_times_triggered += 1
+    light = myPlay.lights["mid"][0]
+    switch = myPlay.switches["mid"][0]
+    turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
     # Do other things, score, etc.
 
 def switch_bot_0(data):
-    turn_on(myPlay.lights["bot"][0])
-    myPlay.switches["bot"][0].num_times_triggered += 1
+    light = myPlay.lights["bot"][0]
+    switch = myPlay.switches["bot"][0]
+    turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
     # Do other things, score, etc.
 
 # Capture ros shutdown
@@ -133,6 +148,9 @@ light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
 update_score_pub = rospy.Publisher('update_score', Int32, queue_size=10)
 update_bonus_pub = rospy.Publisher('update_bonus', Int32, queue_size=10)
 
+# ROS publisher for when a new switch is hit
+switch_list_pub = rospy.Publisher('switch_list', Int32MultiArray, queue_size=10)
+
 # Scheduler to keep track of when we want to turn on.off devices on the playfield
 schedule = sched.scheduler(time.time, time.sleep)
 
@@ -151,7 +169,16 @@ if __name__ == "__main__":
     for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
         for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
             light_off_pub.publish(curr_light.pin)
-    
+
+    '''
+    while not rospy.is_shutdown():
+        print(myPlay.switch_list)
+        switch_bot_0(True)
+        time.sleep(2)
+        switch_mid_0(True)
+        time.sleep(2)
+    '''
+
     # Keep the scheduler in a loop
     while not rospy.is_shutdown():
         schedule.run()

@@ -15,6 +15,10 @@ class Playfield:
         "bot" : [Switch(), Switch(), Switch]
     }
 
+    # Score calculations
     score = 0
     bonus = 0
     bonus_modifier = 1
+
+    # List of switches hit in order
+    switch_list = [-1, -1, -1, -1, -1]
