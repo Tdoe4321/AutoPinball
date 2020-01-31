@@ -20,6 +20,18 @@ import sched, time
 # Capture ctl + c
 import signal
 
+# Here we reset all playfield components to begin the game
+def reset_all_components(data):
+    # New playfield reference
+    myPlay = Playfield()
+    
+    # clear all old scheduled events
+    for event in schedule.queue:
+        schedule.cancel(event)
+    
+    # Create new reference in schedule
+    schedule = sched.scheduler(time.time, time.sleep)
+
 # Keeps the last five commands stored here so we can change mode if you get a sertain combo:
 def new_switch_hit(pin):
     myPlay.switch_list.append(pin)
@@ -139,6 +151,9 @@ override_light_sub = rospy.Subscriber("override_light", override_light, handle_o
 switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
 switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)
 switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
+
+# ROS subscirber that checkes when the start button is pressed
+switch_start_button = rospy.Subscriber("switch_start_button_triggered", Bool, reset_all_components)
 
 # ROS publishers to turn on or off lights
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)

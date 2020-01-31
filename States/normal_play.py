@@ -2,6 +2,7 @@ import rospy
 import smach
 
 from std_msgs.msg import Int32
+from std_msgs.msg import Bool
 from std_msgs.msg import Int32MultiArray
 from pinball_messages.srv import get_light
 from pinball_messages.srv import get_switch
@@ -21,6 +22,13 @@ class Normal_Play(smach.State):
     # If we should transition into a new state or 'mode'
     def switch_callback(self, data):
         print(data.data)
+        #TODO: add specific strings for starting modes
+
+    def restart_game_callback(self, data):
+        print("Start button pressed, resetting game...")
+        self.score = 0
+        self.bonus = 0
+        self.restart = True
 
     # Callback for when score changes
     def score_callback(self, data):
@@ -49,7 +57,7 @@ class Normal_Play(smach.State):
             return False
 
     def __init__(self):
-        smach.State.__init__(self, outcomes=['ball_lost'])
+        smach.State.__init__(self, outcomes=['ball_lost','start_pressed'])
         # ROS variables
         # 1 = left_flipper ON, 2 = right_flipper ON, -1 = left_flipper OFF, -2 = right_flipper OFF
         self.flipper_pub = rospy.Publisher("flip_flipper", Int32, queue_size=1)
@@ -65,11 +73,17 @@ class Normal_Play(smach.State):
         self.get_light_call = rospy.ServiceProxy('get_light', get_light)
         self.get_switch_call = rospy.ServiceProxy('get_switch', get_switch)
 
+        # Start Button Callback
+        self.switch_start_button = rospy.Subscriber("switch_start_button_triggered", Bool, self.restart_game_callback)
+
         # Score & Bonus
         self.score_sub = rospy.Subscriber("update_score", Int32, self.score_callback)
         self.bonus_sub = rospy.Subscriber("update_bonus", Int32, self.bonus_callback)
         self.score = 0
         self.bonus = 0
+
+        # When to restart the game based on pressing the start button
+        self.restart = False
 
         # Switch list update
         self.switch_list_sub = rospy.Subscriber("switch_list", Int32MultiArray, self.switch_callback)
@@ -77,9 +91,6 @@ class Normal_Play(smach.State):
     def execute(self, userdata):
         print("Normal_play")
 
-        print("Game Initializing...")
-        time.sleep(1)
-        print("Ready to Play!")
 
         '''
         #How to make sommething blink, hold, etc.
@@ -101,5 +112,11 @@ class Normal_Play(smach.State):
         print(self.get_switch_object("top", 0).pin)
         '''
 
+        # This will be much higher in the real game, but for debugging, it's nice at 1 sec
+        rate = rospy.Rate(1)
+
         while not rospy.is_shutdown():
-            return 'ball_lost'
+            if self.restart:
+                self.restart = False
+                return 'start_pressed'
+            rate.sleep()
