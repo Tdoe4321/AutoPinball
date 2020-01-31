@@ -15,6 +15,14 @@ from Classes import switch
 import gamestate
 
 class Normal_Play(smach.State):
+    # Callback for when score changes
+    def score_callback(self, data):
+        self.score = data.data
+
+    # Callback for when bonus changes
+    def bonus_callback(self, data):
+        self.bonus = data.data
+
     # Returns an object of what a light is based on row and column
     def get_light_object(self, row, column):
         try:
@@ -49,6 +57,12 @@ class Normal_Play(smach.State):
         # Get a reference to a switch at an instant
         self.get_light_call = rospy.ServiceProxy('get_light', get_light)
         self.get_switch_call = rospy.ServiceProxy('get_switch', get_switch)
+
+        # Score & Bonus
+        self.score_subscriber = rospy.Subscriber("update_score", Int32, self.score_callback)
+        self.bonus_subscriber = rospy.Subscriber("update_bonus", Int32, self.bonus_callback)
+        self.score = 0
+        self.bonus = 0
 
     def execute(self, userdata):
         print("Normal_play")

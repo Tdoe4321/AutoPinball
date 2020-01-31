@@ -16,3 +16,5 @@ class Playfield:
     }
 
     score = 0
+    bonus = 0
+    bonus_modifier = 1

@@ -19,6 +19,16 @@ import sched, time
 # Capture ctl + c
 import signal
 
+# Publishes out new score value
+def update_score(score_to_add):
+    myPlay.score += score_to_add
+    update_score_pub.publish(myPlay.score)
+
+# Published out new bonus value
+def update_bonus(bonus_to_add):
+    myPlay.bonus += (bonus_to_add * myPlay.bonus_modifier)
+    update_bonus_pub.publish(myPlay.bonus)
+
 # Based on ROS srv of row and column, return the information inside the light
 def handle_get_light(req):
     light = myPlay.lights[req.row][req.column]
@@ -118,6 +128,10 @@ switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0
 # ROS publishers to turn on or off lights
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
 light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
+
+# ROS publisher to update score
+update_score_pub = rospy.Publisher('update_score', Int32, queue_size=10)
+update_bonus_pub = rospy.Publisher('update_bonus', Int32, queue_size=10)
 
 # Scheduler to keep track of when we want to turn on.off devices on the playfield
 schedule = sched.scheduler(time.time, time.sleep)
