@@ -1,0 +1,8 @@
+string row
+int32 column
+---
+bool on
+float32 last_time_on
+int32 pin
+float32 general_light_on_time
+string override_light

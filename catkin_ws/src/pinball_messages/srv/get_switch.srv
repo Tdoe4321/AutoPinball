@@ -1,0 +1,7 @@
+string row
+int32 column
+---
+bool on
+int32 last_time_on
+int32 pin
+int32 num_times_triggered 

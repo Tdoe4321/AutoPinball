@@ -56,7 +56,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
-   getData.srv
+   get_switch.srv
+   get_light.srv
  )
 
 ## Generate actions in the 'action' folder

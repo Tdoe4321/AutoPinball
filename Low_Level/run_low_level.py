@@ -9,7 +9,8 @@ from playfield import Playfield
 import rospy
 from std_msgs.msg import Int32
 from std_msgs.msg import Bool
-from pinball_messages.srv import getData
+from pinball_messages.srv import get_light, get_lightResponse
+from pinball_messages.srv import get_switch, get_switchResponse
 from pinball_messages.msg import override_light
 
 # Time and scheduling
@@ -18,10 +19,17 @@ import sched, time
 # Capture ctl + c
 import signal
 
-def handle_getData(req):
-    print(req.request)
-    return 5 # Have a lookup table for information
+# Based on ROS srv of row and column, return the information inside the light
+def handle_get_light(req):
+    light = myPlay.lights[req.row][req.column]
+    return get_lightResponse(light.on, light.last_time_on, light.pin, light.general_light_on_time, light.override_light) # Have a lookup table for information
 
+# Based on ROS srv of row and column, return the information inside the light
+def handle_get_switch(req):
+    switch = myPlay.switches[req.row][req.column]
+    return get_switchResponse(switch.on, switch.last_time_on, switch.pin, switch.num_times_triggered)
+
+# Can put the mode of any switch into "Blink, Hold, etc." 
 def handle_override_light(override):
     light = myPlay.lights[override.row][override.column]
     if override.override == "None":
@@ -31,6 +39,7 @@ def handle_override_light(override):
         light.override_light = override.override
         turn_on(light)
 
+# Turns on a light. If it is supposed to be blinking, it tells it to turn off
 def turn_on(light):
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
@@ -46,6 +55,7 @@ def turn_on(light):
 
     #print("on")
 
+# Turns off a light. If it is supposed to be blinking, it tieels it to turn on
 def turn_off(light):
     light.on = False
     light_off_pub.publish(light.pin)
@@ -58,6 +68,7 @@ def turn_off(light):
 
     #print("off")
 
+# Callback for each switch on the playfield...
 def switch_top_0(data):
     light = myPlay.lights["top"][0]
     turn_on(light)
@@ -74,6 +85,7 @@ def switch_bot_0(data):
     myPlay.switches["bot"][0].num_times_triggered += 1
     # Do other things, score, etc.
 
+# Capture ros shutdown
 def signal_handler():
         print('\nExiting...')
         for event in schedule.queue:
@@ -84,23 +96,30 @@ def signal_handler():
             for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
                 light_off_pub.publish(curr_light.pin)
 
-
+# The status of the playfield, lights, switches, score, etc
 myPlay = Playfield()
 
+# ROS initialization and shutdown
 rospy.init_node('low_level')
 rospy.on_shutdown(signal_handler)
 
-data_server = rospy.Service('get_data', getData, handle_getData)
+# Ros services to return the lights and switches
+get_light_service = rospy.Service('get_light', get_light, handle_get_light)
+get_switch_service = rospy.Service('get_switch', get_switch, handle_get_switch)
 
+# ROS subscriber to change the status of a light from blinking to not or vice versa
 override_light_sub = rospy.Subscriber("override_light", override_light, handle_override_light)
 
+# ROS subscribers for each switch that will exist on the playfield
 switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
 switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)
 switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
 
+# ROS publishers to turn on or off lights
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
 light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
 
+# Scheduler to keep track of when we want to turn on.off devices on the playfield
 schedule = sched.scheduler(time.time, time.sleep)
 
 if __name__ == "__main__":
@@ -119,5 +138,6 @@ if __name__ == "__main__":
         for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
             light_off_pub.publish(curr_light.pin)
     
+    # Keep the scheduler in a loop
     while not rospy.is_shutdown():
         schedule.run()

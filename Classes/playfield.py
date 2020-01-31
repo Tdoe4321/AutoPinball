@@ -14,3 +14,5 @@ class Playfield:
         "mid" : [Switch(), Switch(), Switch], 
         "bot" : [Switch(), Switch(), Switch]
     }
+
+    score = 0
