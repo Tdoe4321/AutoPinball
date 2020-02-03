@@ -20,13 +20,16 @@
 #define LeftFlipper 1
 #define RightFlipper 2
 
-// Switch Inputs
+// Switch Inputs - Playfield
 #define TopSwitch0 11
 #define TopSwitch1 26
 #define MidSwitch0 12
 #define MidSwitch1 31
 #define BotSwitch0 13
-#define BotSwitch1 36
+#define BotSwitch1 9
+
+// Switch Input - Start button
+#define StartButton 10
 
 uint8_t TopSwitch0Last = 0;
 uint8_t TopSwitch1Last = 0;
@@ -34,6 +37,8 @@ uint8_t MidSwitch0Last = 0;
 uint8_t MidSwitch1Last = 0;
 uint8_t BotSwitch0Last = 0;
 uint8_t BotSwitch1Last = 0;
+
+uint8_t StartButtonLast = 0;
 
 // ROS Node Handle
 ros::NodeHandle nh;
@@ -47,6 +52,8 @@ ros::Publisher switch_mid_0_pub("switch_mid_0_triggered", &empty_msg);
 ros::Publisher switch_mid_1_pub("switch_mid_1_triggered", &empty_msg);
 ros::Publisher switch_bot_0_pub("switch_bot_0_triggered", &empty_msg);
 ros::Publisher switch_bot_1_pub("switch_bot_1_triggered", &empty_msg);
+
+ros::Publisher start_button_pub("switch_start_button_triggered", &empty_msg);
 
 //TODO: Possibly add callback for each flipper - then I could change to bool
 void flip_callback(const std_msgs::Int32& flipper){
@@ -83,12 +90,14 @@ ros::Subscriber<std_msgs::Int32> light_off_sub("light_off", &light_off_callback)
 
 // Check all switches, then publish if they are triggered
 void checkSwitches(){
-  int8_t curTopSwitch0 = digitalRead(TopSwitch0);
-  int8_t curTopSwitch1 = digitalRead(TopSwitch1);
-  int8_t curMidSwitch0 = digitalRead(MidSwitch0);
-  int8_t curMidSwitch1 = digitalRead(MidSwitch1);
-  int8_t curBotSwitch0 = digitalRead(BotSwitch0);
-  int8_t curBotSwitch1 = digitalRead(BotSwitch1);
+  uint8_t curTopSwitch0 = digitalRead(TopSwitch0);
+  uint8_t curTopSwitch1 = digitalRead(TopSwitch1);
+  uint8_t curMidSwitch0 = digitalRead(MidSwitch0);
+  uint8_t curMidSwitch1 = digitalRead(MidSwitch1);
+  uint8_t curBotSwitch0 = digitalRead(BotSwitch0);
+  uint8_t curBotSwitch1 = digitalRead(BotSwitch1);
+
+  uint8_t curStartButton = digitalRead(StartButton);
   
   if (!curTopSwitch0 && curTopSwitch0 != TopSwitch0Last){
     switch_top_0_pub.publish(&empty_msg);
@@ -114,13 +123,18 @@ void checkSwitches(){
     switch_bot_1_pub.publish(&empty_msg);
     nh.spinOnce();
   }
+  if (!curStartButton && curStartButton != StartButtonLast){
+    start_button_pub.publish(&empty_msg);
+    nh.spinOnce();
+  }
 
   TopSwitch0Last = curTopSwitch0;
-  TopSwitch0Last = curTopSwitch0;
+  TopSwitch1Last = curTopSwitch1;
   MidSwitch0Last = curMidSwitch0;
-  MidSwitch0Last = curMidSwitch0;
+  MidSwitch1Last = curMidSwitch1;
   BotSwitch0Last = curBotSwitch0;
-  BotSwitch0Last = curBotSwitch0;
+  BotSwitch1Last = curBotSwitch1;
+  StartButtonLast = curStartButton;
 }
 
 void setup(){
@@ -140,6 +154,8 @@ void setup(){
   pinMode(MidSwitch1, INPUT_PULLUP);
   pinMode(BotSwitch0, INPUT_PULLUP);
   pinMode(BotSwitch1, INPUT_PULLUP);
+
+  pinMode(StartButton, INPUT_PULLUP);
   
   nh.initNode();
   
@@ -149,6 +165,8 @@ void setup(){
   nh.advertise(switch_mid_1_pub);
   nh.advertise(switch_bot_0_pub);
   nh.advertise(switch_bot_1_pub);
+
+  nh.advertise(start_button_pub);
   
   nh.subscribe(flip_sub);
   nh.subscribe(light_on_sub);
