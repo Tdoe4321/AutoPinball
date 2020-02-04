@@ -22,20 +22,32 @@ import signal
 
 # Here we reset all playfield components to begin the game
 def reset_all_components(data):
-    # New playfield reference
-    myPlay = Playfield()
+    # Let the user know we are resetting the game
+    print("Deleting all events")
     
+    # Turn off all lights
+    for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
+        for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
+            print(curr_light.override_light)
+            light_off_pub.publish(curr_light.pin)
+
+    # New playfield reference
+    myPlay.reset()
+    myPlay.setup_pins()
+    print("2")
+    for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
+        for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
+            print(curr_light.override_light)
+    return
     # clear all old scheduled events
     for event in schedule.queue:
         schedule.cancel(event)
-    
-    # Create new reference in schedule
-    schedule = sched.scheduler(time.time, time.sleep)
 
 # Keeps the last five commands stored here so we can change mode if you get a sertain combo:
 def new_switch_hit(pin):
     myPlay.switch_list.append(pin)
     myPlay.switch_list.pop(0)
+    print(myPlay.switch_list)
     switch_list_pub.publish(data=myPlay.switch_list)
 
 # Publishes out new score value
@@ -70,6 +82,8 @@ def handle_override_light(override):
 
 # Turns on a light. If it is supposed to be blinking, it tells it to turn off
 def turn_on(light):
+    print("ON")
+    print(myPlay.lights["top"][0].override_light)
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
     light_on_pub.publish(light.pin)
@@ -86,6 +100,8 @@ def turn_on(light):
 
 # Turns off a light. If it is supposed to be blinking, it tieels it to turn on
 def turn_off(light):
+    print("OFF")
+    print(myPlay.lights["top"][0].override_light)
     light.on = False
     light_off_pub.publish(light.pin)
     if light.override_light == "Blink_Slow":
@@ -99,28 +115,37 @@ def turn_off(light):
 
 # Callback for each switch on the playfield...
 def switch_top_0(data):
-    light = myPlay.lights["top"][0]
     switch = myPlay.switches["top"][0]
-    turn_on(light)
+    light = myPlay.lights["top"][0]
+    if not light.override_light:
+        turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     # Do other things, score, etc.
     
 def switch_mid_0(data):
-    light = myPlay.lights["mid"][0]
     switch = myPlay.switches["mid"][0]
-    turn_on(light)
+    light = myPlay.lights["mid"][0]
+    if not light.override_light:
+        turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     # Do other things, score, etc.
 
 def switch_bot_0(data):
-    light = myPlay.lights["bot"][0]
     switch = myPlay.switches["bot"][0]
-    turn_on(light)
+    light = myPlay.lights["bot"][0]
+    if not light.override_light:
+        turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     # Do other things, score, etc.
+
+def switch_bot_1(data):
+    switch = myPlay.switches["bot"][1]
+    print("BOT PIN: " + str(switch.pin))
+    new_switch_hit(switch.pin)
+    reset_all_components(True)
 
 # Capture ros shutdown
 def signal_handler():
@@ -151,6 +176,7 @@ override_light_sub = rospy.Subscriber("override_light", override_light, handle_o
 switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
 switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)
 switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
+switch_bot_1_sub = rospy.Subscriber("switch_bot_1_triggered", Bool, switch_bot_1)
 
 # ROS subscirber that checkes when the start button is pressed
 switch_start_button = rospy.Subscriber("switch_start_button_triggered", Bool, reset_all_components)
@@ -170,15 +196,7 @@ switch_list_pub = rospy.Publisher('switch_list', Int32MultiArray, queue_size=10)
 schedule = sched.scheduler(time.time, time.sleep)
 
 if __name__ == "__main__":
-    # Setup all the pins for the switches on the playfield
-    myPlay.switches["top"][0].pin = 11
-    myPlay.switches["mid"][0].pin = 12
-    myPlay.switches["bot"][0].pin = 13
-
-    # Setup all the pins for the lights on the playfield
-    myPlay.lights["top"][0].pin = 3 # Test Numbers
-    myPlay.lights["mid"][0].pin = 4
-    myPlay.lights["bot"][0].pin = 5
+    myPlay.setup_pins()
 
     # Make sure everything is off at startup
     for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
@@ -194,6 +212,11 @@ if __name__ == "__main__":
         time.sleep(2)
     '''
 
+    #rate = rospy.Rate(1)
+
     # Keep the scheduler in a loop
     while not rospy.is_shutdown():
         schedule.run()
+        #rate.sleep()
+        #if myPlay.lights["top"][0].override_light:
+        #    print("VAL: " + myPlay.lights["top"][0].override_light)

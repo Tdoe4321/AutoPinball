@@ -14,7 +14,7 @@ def createStateMachine():
     with sm_PINBALL:
         smach.StateMachine.add("IDLE", Idle(), transitions={'start_game':'NORMAL_PLAY'})
 
-        smach.StateMachine.add('NORMAL_PLAY', Normal_Play(), transitions={'ball_lost':'game_over','start_pressed':'NORMAL_PLAY'})
+        smach.StateMachine.add('NORMAL_PLAY', Normal_Play(), transitions={'ball_lost':'IDLE','start_pressed':'NORMAL_PLAY'})
 
     # Execute SMACH plan
     outcome = sm_PINBALL.execute()
