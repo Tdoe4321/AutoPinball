@@ -27,7 +27,7 @@ def calc_date(seconds_in_future):
     return datetime.now() + timedelta(seconds=seconds_in_future)
 
 # Here we reset all playfield components to begin the game
-def reset_all_components(data):
+def reset_all_components():
     # Let the user know we are resetting the game
     print("Deleting all events")
     
@@ -75,38 +75,38 @@ def handle_override_light(override):
     light = myPlay.lights[override.row][override.column]
     if override.override == light.override_light:
         pass
-    elif override.override == "None":
-        light.override_light = None
-        turn_off(light)
     else:
         light.override_light = override.override
-        turn_on(light)
+        if override == "None":
+            turn_off(light)
+        else:
+            turn_on(light)
 
-def local_override_light(row, column, override):
-    light = myPlay.lights[row][column]
+def local_override_light(override, light):
     if override == light.override_light:
         pass
-    elif override == "None":
-        light.override_light = None
-        turn_off(light)
     else:
         light.override_light = override
-        turn_on(light)
+        if override == "None":
+            turn_off(light)
+        else:
+            turn_on(light)
 
 
 # Turns on a light. If it is supposed to be blinking, it tells it to turn off
 def turn_on(light):
+    # TODO: Use the 'interval' command from apscheduler instead of 'date' as it can get out of sync
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
     light_on_pub.publish(light.pin)
-    if light.override_light is None:
-        schedule.add_job(turn_off, 'date', run_date=calc_date(light.general_light_on_time), args=[light])
-    elif light.override_light == "Blink_Slow":
+    if light.override_light == "Blink_Slow":
         schedule.add_job(turn_off, 'date', run_date=calc_date(1), args=[light])
     elif light.override_light == "Blink_Med":
         schedule.add_job(turn_off, 'date', run_date=calc_date(.6), args=[light])
     elif light.override_light == "Blink_Fast":
         schedule.add_job(turn_off, 'date', run_date=calc_date(.3), args=[light])
+    else:
+        schedule.add_job(turn_off, 'date', run_date=calc_date(light.general_light_on_time), args=[light])
 
     #print("on")
 
@@ -127,7 +127,7 @@ def turn_off(light):
 def switch_top_0(data):
     switch = myPlay.switches["top"][0]
     light = myPlay.lights["top"][0]
-    if not light.override_light:
+    if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
@@ -136,7 +136,7 @@ def switch_top_0(data):
 def switch_mid_0(data):
     switch = myPlay.switches["mid"][0]
     light = myPlay.lights["mid"][0]
-    if not light.override_light:
+    if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
@@ -145,16 +145,23 @@ def switch_mid_0(data):
 def switch_bot_0(data):
     switch = myPlay.switches["bot"][0]
     light = myPlay.lights["bot"][0]
-    if not light.override_light:
+    if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     # Do other things, score, etc.
 
 def switch_bot_1(data):
+    print("Ball Drained")
     switch = myPlay.switches["bot"][1]
     new_switch_hit(switch.pin)
-    reset_all_components(True)
+    reset_all_components()
+    myPlay.mode = "Idle"
+
+def switch_start_button(data):
+    print("Start Button Pressed!")
+    reset_all_components()
+    myPlay.mode = "Normal_Play"
 
 # Capture ros shutdown
 def signal_handler():
@@ -187,7 +194,7 @@ switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0
 switch_bot_1_sub = rospy.Subscriber("switch_bot_1_triggered", Bool, switch_bot_1)
 
 # ROS subscirber that checkes when the start button is pressed
-switch_start_button = rospy.Subscriber("switch_start_button_triggered", Bool, reset_all_components)
+switch_start_button_sub = rospy.Subscriber("switch_start_button_triggered", Bool, switch_start_button)
 
 # ROS publishers to turn on or off lights
 light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
@@ -221,15 +228,40 @@ if __name__ == "__main__":
         time.sleep(2)
     '''
 
-    #rate = rospy.Rate(1)
+    rate = rospy.Rate(10)
 
     '''
-    local_override_light("top", 0, "Blink_Slow")
-    local_override_light("mid", 0, "Blink_Med")
-    local_override_light("bot", 0, "Blink_Fast")
+    local_override_light("Blink_Slow", myPlay.lights["top"][0])
+    local_override_light("Blink_Med", myPlay.lights["mid"][0])
+    local_override_light("Blink_Fast", myPlay.lights["bot"][0])
     '''
+
+    myPlay.mode = "Idle"
 
     # Keep the scheduler in a loop
     while not rospy.is_shutdown():
-        pass
-        #rate.sleep()
+        if myPlay.mode == "Idle":
+            # TODO: Change this to be by pin number maybe? that way I can do one loop?
+            print("Game Setting Up")
+            i = 1
+            for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
+                for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
+                    i += 1
+                    if i % 2 == 0:
+                        local_override_light("Blink_Slow", light=curr_light)
+            i = 1
+            time.sleep(1)
+            for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
+                for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
+                    i += 1
+                    if i % 2 == 1:
+                        local_override_light("Blink_Slow", light=curr_light)
+            print("Done Setting up")
+            myPlay.mode="Waiting"
+
+        if myPlay.mode == "Normal_Play":
+            print("Normal_Play")
+            print(myPlay.lights["top"][0].override_light)
+            pass
+
+        rate.sleep()
