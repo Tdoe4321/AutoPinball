@@ -1,5 +1,8 @@
 # Source correct files
 import sys, os
+from datetime import datetime  
+from datetime import timedelta 
+from apscheduler.schedulers.background import BackgroundScheduler
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../Classes') # Still is not how I should be doing this, but...it works
 
 # Status of playfield
@@ -15,10 +18,13 @@ from pinball_messages.srv import get_switch, get_switchResponse
 from pinball_messages.msg import override_light
 
 # Time and scheduling
-import sched, time
+import time
 
 # Capture ctl + c
 import signal
+
+def calc_date(seconds_in_future):
+    return datetime.now() + timedelta(seconds=seconds_in_future)
 
 # Here we reset all playfield components to begin the game
 def reset_all_components(data):
@@ -28,26 +34,20 @@ def reset_all_components(data):
     # Turn off all lights
     for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
         for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-            print(curr_light.override_light)
             light_off_pub.publish(curr_light.pin)
 
     # New playfield reference
     myPlay.reset()
     myPlay.setup_pins()
-    print("2")
-    for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
-        for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-            print(curr_light.override_light)
-    return
+
     # clear all old scheduled events
-    for event in schedule.queue:
-        schedule.cancel(event)
+    for job in schedule.get_jobs():
+        job.remove()
 
 # Keeps the last five commands stored here so we can change mode if you get a sertain combo:
 def new_switch_hit(pin):
     myPlay.switch_list.append(pin)
     myPlay.switch_list.pop(0)
-    print(myPlay.switch_list)
     switch_list_pub.publish(data=myPlay.switch_list)
 
 # Publishes out new score value
@@ -73,43 +73,53 @@ def handle_get_switch(req):
 # Can put the mode of any switch into "Blink, Hold, etc." 
 def handle_override_light(override):
     light = myPlay.lights[override.row][override.column]
-    if override.override == "None":
+    if override.override == light.override_light:
+        pass
+    elif override.override == "None":
         light.override_light = None
         turn_off(light)
     else:
         light.override_light = override.override
         turn_on(light)
 
+def local_override_light(row, column, override):
+    light = myPlay.lights[row][column]
+    if override == light.override_light:
+        pass
+    elif override == "None":
+        light.override_light = None
+        turn_off(light)
+    else:
+        light.override_light = override
+        turn_on(light)
+
+
 # Turns on a light. If it is supposed to be blinking, it tells it to turn off
 def turn_on(light):
-    print("ON")
-    print(myPlay.lights["top"][0].override_light)
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
     light_on_pub.publish(light.pin)
     if light.override_light is None:
-        schedule.enter(light.general_light_on_time, 1, turn_off, argument=(light,)) 
+        schedule.add_job(turn_off, 'date', run_date=calc_date(light.general_light_on_time), args=[light])
     elif light.override_light == "Blink_Slow":
-        schedule.enter(1, 1, turn_off, argument=(light,))
+        schedule.add_job(turn_off, 'date', run_date=calc_date(1), args=[light])
     elif light.override_light == "Blink_Med":
-        schedule.enter(0.6, 1, turn_off, argument=(light,))
+        schedule.add_job(turn_off, 'date', run_date=calc_date(.6), args=[light])
     elif light.override_light == "Blink_Fast":
-        schedule.enter(0.3, 1, turn_off, argument=(light,))
+        schedule.add_job(turn_off, 'date', run_date=calc_date(.3), args=[light])
 
     #print("on")
 
 # Turns off a light. If it is supposed to be blinking, it tieels it to turn on
 def turn_off(light):
-    print("OFF")
-    print(myPlay.lights["top"][0].override_light)
     light.on = False
     light_off_pub.publish(light.pin)
     if light.override_light == "Blink_Slow":
-        schedule.enter(1, 1, turn_on, argument=(light,))
+        schedule.add_job(turn_on, 'date', run_date=calc_date(1), args=[light])
     elif light.override_light == "Blink_Med":
-        schedule.enter(0.6, 1, turn_on, argument=(light,))
+        schedule.add_job(turn_on, 'date', run_date=calc_date(0.6), args=[light])
     elif light.override_light == "Blink_Fast":
-        schedule.enter(0.3, 1, turn_on, argument=(light,))
+        schedule.add_job(turn_on, 'date', run_date=calc_date(0.3), args=[light])
 
     #print("off")
 
@@ -143,15 +153,13 @@ def switch_bot_0(data):
 
 def switch_bot_1(data):
     switch = myPlay.switches["bot"][1]
-    print("BOT PIN: " + str(switch.pin))
     new_switch_hit(switch.pin)
     reset_all_components(True)
 
 # Capture ros shutdown
 def signal_handler():
         print('\nExiting...')
-        for event in schedule.queue:
-            schedule.cancel(event)
+        schedule.shutdown()
 
         # Turn off all lights
         for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
@@ -193,7 +201,8 @@ update_bonus_pub = rospy.Publisher('update_bonus', Int32, queue_size=10)
 switch_list_pub = rospy.Publisher('switch_list', Int32MultiArray, queue_size=10)
 
 # Scheduler to keep track of when we want to turn on.off devices on the playfield
-schedule = sched.scheduler(time.time, time.sleep)
+schedule = BackgroundScheduler()
+schedule.start()
 
 if __name__ == "__main__":
     myPlay.setup_pins()
@@ -214,9 +223,13 @@ if __name__ == "__main__":
 
     #rate = rospy.Rate(1)
 
+    '''
+    local_override_light("top", 0, "Blink_Slow")
+    local_override_light("mid", 0, "Blink_Med")
+    local_override_light("bot", 0, "Blink_Fast")
+    '''
+
     # Keep the scheduler in a loop
     while not rospy.is_shutdown():
-        schedule.run()
+        pass
         #rate.sleep()
-        #if myPlay.lights["top"][0].override_light:
-        #    print("VAL: " + myPlay.lights["top"][0].override_light)
