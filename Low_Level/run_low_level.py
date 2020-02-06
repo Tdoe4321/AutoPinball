@@ -1,9 +1,11 @@
 # Source correct files
 import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../Classes') # Still is not how I should be doing this, but...it works
+
+# Schedule tasks
+from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime  
 from datetime import timedelta 
-from apscheduler.schedulers.background import BackgroundScheduler
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../Classes') # Still is not how I should be doing this, but...it works
 
 # Status of playfield
 from playfield import Playfield
@@ -305,5 +307,8 @@ if __name__ == "__main__":
             print(myPlay.lights["top"][0].override_light)
             local_override_light("Blink_Fast", light=myPlay.lights["top"][0])
             pass
+
+        #if myPlay.mode == "High_Score":
+
 
         rate.sleep()

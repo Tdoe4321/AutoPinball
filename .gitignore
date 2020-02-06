@@ -132,3 +132,6 @@ dmypy.json
 # build and devel from catkin
 catkin_ws/build/*
 catkin_ws/devel/*
+
+# Highscores
+highscores.txt
