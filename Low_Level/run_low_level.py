@@ -23,8 +23,13 @@ import time
 # Capture ctl + c
 import signal
 
-def calc_date(seconds_in_future):
-    return datetime.now() + timedelta(seconds=seconds_in_future)
+def calc_date(seconds_in_future, light):
+    if light.blink_start_time == -1:
+        return datetime.now() + timedelta(seconds=seconds_in_future)
+    elif light.on:
+        return light.blink_start_time + timedelta(seconds=(seconds_in_future + (2*light.curr_number_blink * seconds_in_future)))
+    elif not light.on:
+        return light.blink_start_time + timedelta(seconds=(seconds_in_future + ((2*light.curr_number_blink - 1) * seconds_in_future)))
 
 # Here we reset all playfield components to begin the game
 def reset_all_components():
@@ -83,30 +88,38 @@ def handle_override_light(override):
             turn_on(light)
 
 def local_override_light(override, light):
+    # TODO This only works right now because we remove all events when we create a new Playfield instance
+    # I need to find a way to remove all previous scheduled events on override change
     if override == light.override_light:
         pass
     else:
         light.override_light = override
         if override == "None":
             turn_off(light)
+            light.curr_number_blink = 0
+            light.blink_start_time = -1
         else:
+            light.curr_number_blink = 0
+            light.blink_start_time = datetime.now()
             turn_on(light)
 
 
 # Turns on a light. If it is supposed to be blinking, it tells it to turn off
 def turn_on(light):
-    # TODO: Use the 'interval' command from apscheduler instead of 'date' as it can get out of sync
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
     light_on_pub.publish(light.pin)
     if light.override_light == "Blink_Slow":
-        schedule.add_job(turn_off, 'date', run_date=calc_date(1), args=[light])
+        schedule.add_job(turn_off, 'date', run_date=calc_date(1, light), args=[light])
+        light.curr_number_blink += 1
     elif light.override_light == "Blink_Med":
-        schedule.add_job(turn_off, 'date', run_date=calc_date(.6), args=[light])
+        schedule.add_job(turn_off, 'date', run_date=calc_date(0.6, light), args=[light])
+        light.curr_number_blink += 1
     elif light.override_light == "Blink_Fast":
-        schedule.add_job(turn_off, 'date', run_date=calc_date(.3), args=[light])
+        schedule.add_job(turn_off, 'date', run_date=calc_date(0.3, light), args=[light])
+        light.curr_number_blink += 1
     else:
-        schedule.add_job(turn_off, 'date', run_date=calc_date(light.general_light_on_time), args=[light])
+        schedule.add_job(turn_off, 'date', run_date=calc_date(light.general_light_on_time, light), args=[light])
 
     #print("on")
 
@@ -115,11 +128,11 @@ def turn_off(light):
     light.on = False
     light_off_pub.publish(light.pin)
     if light.override_light == "Blink_Slow":
-        schedule.add_job(turn_on, 'date', run_date=calc_date(1), args=[light])
+        schedule.add_job(turn_on, 'date', run_date=calc_date(1, light), args=[light])
     elif light.override_light == "Blink_Med":
-        schedule.add_job(turn_on, 'date', run_date=calc_date(0.6), args=[light])
+        schedule.add_job(turn_on, 'date', run_date=calc_date(0.6, light), args=[light])
     elif light.override_light == "Blink_Fast":
-        schedule.add_job(turn_on, 'date', run_date=calc_date(0.3), args=[light])
+        schedule.add_job(turn_on, 'date', run_date=calc_date(0.3, light), args=[light])
 
     #print("off")
 
@@ -234,8 +247,13 @@ if __name__ == "__main__":
     local_override_light("Blink_Slow", myPlay.lights["top"][0])
     local_override_light("Blink_Med", myPlay.lights["mid"][0])
     local_override_light("Blink_Fast", myPlay.lights["bot"][0])
-    '''
+    
+    time.sleep(.5)
 
+    local_override_light("Blink_Slow", myPlay.lights["top"][0])
+    local_override_light("Blink_Slow", myPlay.lights["mid"][0])
+    local_override_light("Blink_Slow", myPlay.lights["bot"][0])
+    '''
     myPlay.mode = "Idle"
 
     # Keep the scheduler in a loop
