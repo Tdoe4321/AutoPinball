@@ -100,8 +100,6 @@ def handle_override_light(override):
             turn_on(light)
 
 def local_override_light(override, light):
-    # TODO This only works right now because we remove all events when we create a new Playfield instance
-    # I need to find a way to remove all previous scheduled events on override change
     if override == light.override_light:
         pass
     else:
