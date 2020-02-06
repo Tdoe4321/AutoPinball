@@ -23,6 +23,18 @@ import time
 # Capture ctl + c
 import signal
 
+def schedule_on(light, time_until):
+    try:
+        schedule.add_job(turn_on, 'date', run_date=calc_date(time_until, light), args=[light], id=str(light.pin) + "ON")
+    except:
+        print("Tried to schedule on, job with same name, no can do!")
+
+def schedule_off(light, time_until):
+    try:
+        schedule.add_job(turn_off, 'date', run_date=calc_date(time_until, light), args=[light], id=str(light.pin) + "OFF") 
+    except:
+        print("Tried to schedule off, job with same name, no can do!")
+
 def calc_date(seconds_in_future, light):
     if light.blink_start_time == -1:
         return datetime.now() + timedelta(seconds=seconds_in_future)
@@ -98,10 +110,23 @@ def local_override_light(override, light):
             turn_off(light)
             light.curr_number_blink = 0
             light.blink_start_time = -1
+            try:
+                schedule.remove_job(str(light.pin) + "ON")
+            except:
+                print("Tried to remove job, but no name - NONE")
         else:
             light.curr_number_blink = 0
             light.blink_start_time = datetime.now()
+            try:
+                schedule.remove_job(str(light.pin) + "ON")            
+            except:
+                print("Tried to remove job, but no name - ON")
+            try:
+                schedule.remove_job(str(light.pin) + "OFF")            
+            except:
+                print("Tried to remove job, but no name - OFF")
             turn_on(light)
+
 
 
 # Turns on a light. If it is supposed to be blinking, it tells it to turn off
@@ -110,16 +135,16 @@ def turn_on(light):
     light.last_time_on = rospy.get_rostime().to_sec()
     light_on_pub.publish(light.pin)
     if light.override_light == "Blink_Slow":
-        schedule.add_job(turn_off, 'date', run_date=calc_date(1, light), args=[light])
+        schedule_off(light, 1)
         light.curr_number_blink += 1
     elif light.override_light == "Blink_Med":
-        schedule.add_job(turn_off, 'date', run_date=calc_date(0.6, light), args=[light])
+        schedule_off(light, 0.6)
         light.curr_number_blink += 1
     elif light.override_light == "Blink_Fast":
-        schedule.add_job(turn_off, 'date', run_date=calc_date(0.3, light), args=[light])
+        schedule_off(light, 0.3)
         light.curr_number_blink += 1
     else:
-        schedule.add_job(turn_off, 'date', run_date=calc_date(light.general_light_on_time, light), args=[light])
+        schedule_off(light, light.general_light_on_time)
 
     #print("on")
 
@@ -128,11 +153,11 @@ def turn_off(light):
     light.on = False
     light_off_pub.publish(light.pin)
     if light.override_light == "Blink_Slow":
-        schedule.add_job(turn_on, 'date', run_date=calc_date(1, light), args=[light])
+        schedule_on(light, 1)
     elif light.override_light == "Blink_Med":
-        schedule.add_job(turn_on, 'date', run_date=calc_date(0.6, light), args=[light])
+        schedule_on(light, 0.6)
     elif light.override_light == "Blink_Fast":
-        schedule.add_job(turn_on, 'date', run_date=calc_date(0.3, light), args=[light])
+        schedule_on(light, 0.3)
 
     #print("off")
 
@@ -265,14 +290,14 @@ if __name__ == "__main__":
             for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
                 for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
                     i += 1
-                    if i % 2 == 0:
+                    if i % 2 == 0 and curr_light.pin != -1:
                         local_override_light("Blink_Slow", light=curr_light)
             i = 1
             time.sleep(1)
             for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
                 for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
                     i += 1
-                    if i % 2 == 1:
+                    if i % 2 == 1 and curr_light.pin != -1:
                         local_override_light("Blink_Slow", light=curr_light)
             print("Done Setting up")
             myPlay.mode="Waiting"
@@ -280,6 +305,7 @@ if __name__ == "__main__":
         if myPlay.mode == "Normal_Play":
             print("Normal_Play")
             print(myPlay.lights["top"][0].override_light)
+            local_override_light("Blink_Fast", light=myPlay.lights["top"][0])
             pass
 
         rate.sleep()
