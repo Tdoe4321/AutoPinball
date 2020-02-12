@@ -25,18 +25,45 @@ import time
 # Capture ctl + c
 import signal
 
+# Will use flipper.general_flipper_on_time if time_until_off is set. 
+# Set it to 0 to hold
+def flipper_on(flipper, time_util_off=-1):
+    flipper.on = True
+    flipper.last_time_on = rospy.get_rostime().to_sec()
+    flipper_pub.publish(flipper.flipper_num)
+    if time_util_off > 0:
+        try:
+            schedule.add_job(flipper_off, 'date', run_date=(datetime.now() + timedelta(seconds=time_util_off)), args=[flipper], id=str(flipper.flipper_num) + "OFF")
+        except:
+            print("Tried to schedule flipper off: " + str(flipper.flipper_num))
+    elif time_util_off == 0:
+        # Will HOLD the flipper until you turn it off
+        pass
+    else:
+        try:
+            schedule.add_job(flipper_off, 'date', run_date=(datetime.now() + timedelta(seconds=flipper.general_flipper_on_time)), args=[flipper], id=str(flipper.flipper_num) + "OFF")
+        except:
+            print("Tried to schedule flipper off: " + str(flipper.flipper_num))
+
+def flipper_off(flipper):
+    flipper.on = False
+    flipper_pub.publish(flipper.flipper_num * -1)
+
+# Schedule a time to turn a light on
 def schedule_on(light, time_until):
     try:
         schedule.add_job(turn_on, 'date', run_date=calc_date(time_until, light), args=[light], id=str(light.pin) + "ON")
     except:
         print("Tried to schedule on, job with same name, no can do!")
 
+# Schedule a time to turn a light off
 def schedule_off(light, time_until):
     try:
         schedule.add_job(turn_off, 'date', run_date=calc_date(time_until, light), args=[light], id=str(light.pin) + "OFF") 
     except:
         print("Tried to schedule off, job with same name, no can do!")
 
+# Calculate the time to turn on or off a light
 def calc_date(seconds_in_future, light):
     if light.blink_start_time == -1:
         return datetime.now() + timedelta(seconds=seconds_in_future)
@@ -245,6 +272,9 @@ update_bonus_pub = rospy.Publisher('update_bonus', Int32, queue_size=10)
 # ROS publisher for when a new switch is hit
 switch_list_pub = rospy.Publisher('switch_list', Int32MultiArray, queue_size=10)
 
+# Flipper Publisher
+flipper_pub = rospy.Publisher('flip_flipper', Int32, queue_size=10)
+
 # Scheduler to keep track of when we want to turn on.off devices on the playfield
 schedule = BackgroundScheduler()
 schedule.start()
@@ -305,7 +335,7 @@ if __name__ == "__main__":
         if myPlay.mode == "Normal_Play":
             print("Normal_Play")
             print(myPlay.lights["top"][0].override_light)
-            local_override_light("Blink_Fast", light=myPlay.lights["top"][0])
+            #local_override_light("Blink_Med", light=myPlay.lights["top"][0])
             pass
 
         #if myPlay.mode == "High_Score":

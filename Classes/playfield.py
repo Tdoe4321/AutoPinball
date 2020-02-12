@@ -1,5 +1,6 @@
 from light import Light
 from switch import Switch
+from flipper import Flipper
 
 # High Score
 from operator import itemgetter
@@ -19,7 +20,8 @@ class Playfield:
                 "mid" : [Switch(), Switch(), Switch], 
                 "bot" : [Switch(), Switch(), Switch]
                 }, 
-                score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None): 
+                score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None,
+                left_flipper = Flipper(flipper_num=1), right_flipper = Flipper(flipper_num=2)): 
         """ Class that will hold all the componenets in our playfield """
         self.switches = switches
         self.lights = lights
@@ -30,6 +32,8 @@ class Playfield:
         self.mode = mode
         self.high_scores = high_scores
         self.load_high_scores()
+        self.left_flipper = left_flipper
+        self.right_flipper = right_flipper
         
     def reset(self):
         self.lights = {
@@ -58,6 +62,10 @@ class Playfield:
         # List of paired items of 10 High Scores
         self.high_scores = None
         self.load_high_scores()
+
+        # Flippers
+        self.left_flipper = Flipper(flipper_num=1)
+        self.right_flipper = Flipper(flipper_num=2)
         
     def setup_pins(self):
         # Setup all the pins for the switches on the playfield
