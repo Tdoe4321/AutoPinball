@@ -6,19 +6,21 @@ from flipper import Flipper
 from operator import itemgetter
 import pickle
 
+from collections import deque
+
 import os
 
 class Playfield:
     def __init__(self, 
                 lights = {
-                "top" : [Light(), Light(), Light()], 
-                "mid" : [Light(), Light(), Light()], 
-                "bot" : [Light(), Light(), Light()]
+                "top" : deque([Light(), Light(), Light()]), 
+                "mid" : deque([Light(), Light(), Light()]), 
+                "bot" : deque([Light(), Light(), Light()])
                 }, 
                 switches = {
-                "top" : [Switch(), Switch(), Switch], 
-                "mid" : [Switch(), Switch(), Switch], 
-                "bot" : [Switch(), Switch(), Switch]
+                "top" : deque([Switch(), Switch(), Switch]), 
+                "mid" : deque([Switch(), Switch(), Switch]), 
+                "bot" : deque([Switch(), Switch(), Switch])
                 }, 
                 score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None,
                 left_flipper = Flipper(flipper_num=1), right_flipper = Flipper(flipper_num=2)): 
