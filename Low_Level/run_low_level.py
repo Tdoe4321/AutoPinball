@@ -25,6 +25,8 @@ import time
 # Capture ctl + c
 import signal
 
+import getch
+
 # Will use flipper.general_flipper_on_time if time_until_off is set. 
 # Set it to 0 to hold
 def flipper_on(flipper, time_util_off=-1):
@@ -229,8 +231,7 @@ def switch_bot_1(data):
     print("Ball Drained")
     switch = myPlay.switches["bot"][1]
     new_switch_hit(switch.pin)
-    reset_all_components()
-    myPlay.mode = "Idle"
+    myPlay.mode = "Final_Screen"
 
 def switch_start_button(data):
     print("Start Button Pressed!")
@@ -320,6 +321,8 @@ if __name__ == "__main__":
     '''
     myPlay.mode = "Idle"
 
+    checking_highscore = False
+
     # Keep the scheduler in a loop
     while not rospy.is_shutdown():
         if myPlay.mode == "Idle":
@@ -346,6 +349,14 @@ if __name__ == "__main__":
             print(myPlay.lights["top"][0].override_light)
             #local_override_light("Blink_Med", light=myPlay.lights["top"][0])
             pass
+
+        if myPlay.mode == "Final_Screen":
+            print("Congradulations! Your score is: " + str(myPlay.score))
+            if(checking_highscore):
+                user_name = raw_input("Please enter your name and we will tell you if you scored a high score\n")
+                myPlay.check_high_score(user_name, myPlay.score)
+            reset_all_components()
+            myPlay.mode = "Idle"
 
         #if myPlay.mode == "High_Score":
 

@@ -10,6 +10,8 @@ from collections import deque
 
 import os
 
+from pprint import pprint
+
 class Playfield:
     def __init__(self, 
                 lights = {
@@ -93,7 +95,14 @@ class Playfield:
 
     def check_high_score(self, name, score):
         self.high_scores.append((name, score))
-        self.high_scores = sorted(self.high_scores, key=itemgetter(1), reverse=True)[:10]
+        self.high_scores = sorted(self.high_scores, key=itemgetter(1), reverse=True)
+        if self.high_scores[10] == (name,score):
+            print("Sorry, you didn't make the high score list")
+        else:
+            print("Congrats! You made the top 10!")
+        self.high_scores = self.high_scores[:10]
+
+        pprint(self.high_scores)
 
         with open(os.path.dirname(os.path.realpath(__file__)) + '/../highscores.txt', 'w') as f:
             pickle.dump(self.high_scores, f)
