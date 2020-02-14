@@ -10,8 +10,8 @@ class PinballGUI:
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("AutoPinball")
-        self.font = tkFont.Font(size = 100)
-        self.score_label = tk.Label(self.window, text="0", font=self.font)
+        self.font = tkFont.Font(size = 150)
+        self.score_label = tk.Label(self.window, text="0", font=self.font, bg="#FDBB30", fg="#0B1315")
 
 def update_score(data, GUI):
     GUI.score_label['text'] = '{:,}'.format(data.data)

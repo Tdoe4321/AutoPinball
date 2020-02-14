@@ -102,8 +102,10 @@ def new_switch_hit(pin):
 
 # Publishes out new score value
 def update_score(score_to_add):
-    myPlay.score += score_to_add
-    update_score_pub.publish(myPlay.score)
+    print(myPlay.mode)
+    if myPlay.mode != "Idle" and myPlay.mode != "Idle_Waiting":
+        myPlay.score += score_to_add
+        update_score_pub.publish(myPlay.score)
 
 # Published out new bonus value
 def update_bonus(bonus_to_add):
@@ -200,7 +202,7 @@ def switch_top_0(data):
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
-    update_score(100)
+    update_score(10000)
     # Do other things, score, etc.
     
 def switch_mid_0(data):
@@ -210,7 +212,7 @@ def switch_mid_0(data):
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
-    update_score(100)
+    update_score(1000)
     # Do other things, score, etc.
 
 def switch_bot_0(data):
@@ -337,7 +339,7 @@ if __name__ == "__main__":
                     if i % 2 == 1 and curr_light.pin != -1:
                         local_override_light("Blink_Slow", light=curr_light)
             print("Done Setting up")
-            myPlay.mode="Waiting"
+            myPlay.mode="Idle_Waiting"
 
         if myPlay.mode == "Normal_Play":
             print("Normal_Play")
