@@ -90,6 +90,10 @@ def reset_all_components():
     for job in schedule.get_jobs():
         job.remove()
 
+    # Publish out that we have no points
+    update_score(0)
+    update_bonus(0)
+
 # Keeps the last five commands stored here so we can change mode if you get a sertain combo:
 def new_switch_hit(pin):
     myPlay.switch_list.append(pin)
@@ -196,6 +200,7 @@ def switch_top_0(data):
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    update_score(100)
     # Do other things, score, etc.
     
 def switch_mid_0(data):
@@ -205,6 +210,7 @@ def switch_mid_0(data):
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    update_score(100)
     # Do other things, score, etc.
 
 def switch_bot_0(data):
@@ -214,6 +220,7 @@ def switch_bot_0(data):
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    update_score(100)
     # Do other things, score, etc.
 
 def switch_bot_1(data):

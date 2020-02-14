@@ -1,29 +1,27 @@
 import Tkinter as tk
 import tkFont
 import time
+import rospy
+
+from std_msgs.msg import Int32
 
 
 class PinballGUI:
     def __init__(self):
         self.window = tk.Tk()
-        self.window.title("Welcome to LikeGeeks app")
-        self.window.resizable(True, True) 
-        self.font = tkFont.Font(size = 50)
-        self.lbl = tk.Label(self.window, text="Hello", font=self.font)
+        self.window.title("AutoPinball")
+        self.font = tkFont.Font(size = 100)
+        self.score_label = tk.Label(self.window, text="0", font=self.font)
 
-    def resize(self, event):
-        print("HERE")
-        self.lbl = tk.Label(self.window, text="Hello", width=self.window.winfo_width(), height=self.window.winfo_height())
-        # self.font = tkFont.Font(size=self.window.winfo_width())
-        #self.lbl.config(font=self.font)
+def update_score(data, GUI):
+    GUI.score_label['text'] = '{:,}'.format(data.data)
 
 if __name__ == "__main__":
     myGUI = PinballGUI()
-     
-
+    rospy.init_node("Pinball_GUI")
     
-    myGUI.lbl.grid(column=0, row=0)
+    myGUI.score_label.grid(column=0, row=0)
 
-    myGUI.window.bind('<Configure>', myGUI.resize)
+    score_sub = rospy.Subscriber("update_score", Int32, update_score, myGUI)
 
     myGUI.window.mainloop()
