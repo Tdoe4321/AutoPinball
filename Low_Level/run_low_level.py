@@ -15,6 +15,7 @@ import rospy
 from std_msgs.msg import Int32
 from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Bool
+from std_msgs.msg import String
 from pinball_messages.srv import get_light, get_lightResponse
 from pinball_messages.srv import get_switch, get_switchResponse
 from pinball_messages.msg import override_light
@@ -25,7 +26,11 @@ import time
 # Capture ctl + c
 import signal
 
-import getch
+# Method to handle all the changeing of mode
+def change_mode(new_mode):
+    print("Changing to new mode: " + new_mode)
+    myPlay.mode=new_mode
+    update_message_pub.publish("MODE: " + new_mode)
 
 # Will use flipper.general_flipper_on_time if time_until_off is set. 
 # Set it to 0 to hold
@@ -104,7 +109,6 @@ def new_switch_hit(pin):
 
 # Publishes out new score value
 def update_score(score_to_add):
-    print(myPlay.mode)
     if myPlay.mode != "Idle" and myPlay.mode != "Idle_Waiting":
         myPlay.score += score_to_add
         update_score_pub.publish(myPlay.score)
@@ -231,12 +235,12 @@ def switch_bot_1(data):
     print("Ball Drained")
     switch = myPlay.switches["bot"][1]
     new_switch_hit(switch.pin)
-    myPlay.mode = "Final_Screen"
+    change_mode("Final_Screen")
 
 def switch_start_button(data):
     print("Start Button Pressed!")
     reset_all_components()
-    myPlay.mode = "Normal_Play"
+    change_mode("Standard_Play")
 
 # Capture ros shutdown
 def signal_handler():
@@ -279,6 +283,9 @@ light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
 update_score_pub = rospy.Publisher('update_score', Int32, queue_size=10)
 update_bonus_pub = rospy.Publisher('update_bonus', Int32, queue_size=10)
 
+# ROS publisher to update GUI message
+update_message_pub = rospy.Publisher('update_message', String, queue_size=10)
+
 # ROS publisher for when a new switch is hit
 switch_list_pub = rospy.Publisher('switch_list', Int32MultiArray, queue_size=10)
 
@@ -319,7 +326,7 @@ if __name__ == "__main__":
     local_override_light("Blink_Slow", myPlay.lights["mid"][0])
     local_override_light("Blink_Slow", myPlay.lights["bot"][0])
     '''
-    myPlay.mode = "Idle"
+    change_mode("Idle")
 
     checking_highscore = False
 
@@ -342,7 +349,7 @@ if __name__ == "__main__":
                     if i % 2 == 1 and curr_light.pin != -1:
                         local_override_light("Blink_Slow", light=curr_light)
             print("Done Setting up")
-            myPlay.mode="Idle_Waiting"
+            change_mode("Idle_Waiting")
 
         if myPlay.mode == "Normal_Play":
             print("Normal_Play")
@@ -356,7 +363,7 @@ if __name__ == "__main__":
                 user_name = raw_input("Please enter your name and we will tell you if you scored a high score\n")
                 myPlay.check_high_score(user_name, myPlay.score)
             reset_all_components()
-            myPlay.mode = "Idle"
+            change_mode("Idle")
 
         #if myPlay.mode == "High_Score":
 
