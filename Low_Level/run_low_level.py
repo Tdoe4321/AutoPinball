@@ -35,6 +35,9 @@ def change_mode(new_mode):
 # Will use flipper.general_flipper_on_time if time_until_off is set. 
 # Set it to 0 to hold
 def flipper_on(flipper, time_util_off=-1):
+    #print("ON: " + str(flipper.flipper_num))
+    if flipper.on:
+        return
     flipper.on = True
     flipper.last_time_on = rospy.get_rostime().to_sec()
     flipper_pub.publish(flipper.flipper_num)
@@ -53,8 +56,21 @@ def flipper_on(flipper, time_util_off=-1):
             print("Tried to schedule flipper off: " + str(flipper.flipper_num))
 
 def flipper_off(flipper):
+    #print("OFF: " + str(flipper.flipper_num))
+    if not flipper.on:
+        return
     flipper.on = False
     flipper_pub.publish(flipper.flipper_num * -1)
+
+def flip_flipper_callback(flipper_msg):
+    if flipper_msg.data == 1:
+        flipper_on(myPlay.left_flipper, 0)
+    elif flipper_msg.data == 2:
+        flipper_on(myPlay.right_flipper, 0)
+    elif flipper_msg.data == -1:
+        flipper_off(myPlay.left_flipper)
+    elif flipper_msg.data == -2:
+        flipper_off(myPlay.right_flipper)
 
 # Schedule a time to turn a light on
 def schedule_on(light, time_until):
@@ -240,7 +256,7 @@ def switch_bot_1(data):
 def switch_start_button(data):
     print("Start Button Pressed!")
     reset_all_components()
-    change_mode("Standard_Play")
+    change_mode("Normal_Play")
 
 # Capture ros shutdown
 def signal_handler():
@@ -291,6 +307,9 @@ switch_list_pub = rospy.Publisher('switch_list', Int32MultiArray, queue_size=10)
 
 # Flipper Publisher
 flipper_pub = rospy.Publisher('flip_flipper', Int32, queue_size=10)
+
+# Flipper Subscribers
+flipper_sub = rospy.Subscriber('internal_flip_flipper', Int32, flip_flipper_callback)
 
 # Scheduler to keep track of when we want to turn on.off devices on the playfield
 schedule = BackgroundScheduler()
@@ -349,11 +368,14 @@ if __name__ == "__main__":
                     if i % 2 == 1 and curr_light.pin != -1:
                         local_override_light("Blink_Slow", light=curr_light)
             print("Done Setting up")
+            #local_override_light("Blink_Med", light=myPlay.lights["top"][0])
             change_mode("Idle_Waiting")
+            #reset_all_components()
+            #change_mode("Normal_Play")
 
         if myPlay.mode == "Normal_Play":
             print("Normal_Play")
-            print(myPlay.lights["top"][0].override_light)
+            #print(myPlay.lights["top"][0].override_light)
             #local_override_light("Blink_Med", light=myPlay.lights["top"][0])
             pass
 
