@@ -9,27 +9,27 @@
 #include <std_msgs/Bool.h>
 
 // Light Outputs
-#define TopLight0 3
-#define TopLight1 30
-#define MidLight0 4
-#define MidLight1 16
-#define BotLight0 5
-#define BotLight1 21
+#define TopLight0 22 // Playfield Light
+#define TopLight1 99
+#define MidLight0 99
+#define MidLight1 99
+#define BotLight0 99
+#define BotLight1 99
 
 // Flipper Outputs
-#define LeftFlipper 1
-#define RightFlipper 2
+#define LeftFlipper 32
+#define RightFlipper 33
 
 // Switch Inputs - Playfield
-#define TopSwitch0 11
-#define TopSwitch1 26
-#define MidSwitch0 12
-#define MidSwitch1 31
-#define BotSwitch0 13
-#define BotSwitch1 9
+#define TopSwitch0 34 // Pop Bumper
+#define TopSwitch1 99
+#define MidSwitch0 42 // stand up
+#define MidSwitch1 99
+#define BotSwitch0 36 // Slingshot
+#define BotSwitch1 43 // Drain
 
 // Switch Input - Start button
-#define StartButton 10
+#define StartButton 99 
 
 uint8_t TopSwitch0Last = 0;
 uint8_t TopSwitch1Last = 0;
@@ -99,7 +99,7 @@ void checkSwitches(){
 
   uint8_t curStartButton = digitalRead(StartButton);
   
-  if (!curTopSwitch0 && curTopSwitch0 != TopSwitch0Last){
+  if (curTopSwitch0 && curTopSwitch0 != TopSwitch0Last){
     switch_top_0_pub.publish(&empty_msg);
     nh.spinOnce();
   }
@@ -115,7 +115,7 @@ void checkSwitches(){
     switch_mid_1_pub.publish(&empty_msg);
     nh.spinOnce();
   }
-  if (!curBotSwitch0 && curBotSwitch0 != BotSwitch0Last){
+  if (curBotSwitch0 && curBotSwitch0 != BotSwitch0Last){
     switch_bot_0_pub.publish(&empty_msg);
     nh.spinOnce();
   }
@@ -148,11 +148,13 @@ void setup(){
   pinMode(LeftFlipper, OUTPUT);
   pinMode(RightFlipper, OUTPUT);
 
-  pinMode(TopSwitch0, INPUT_PULLUP);
+  digitalWrite(LeftFlipper, LOW);
+
+  //pinMode(TopSwitch0, INPUT_PULLUP);
   pinMode(TopSwitch1, INPUT_PULLUP);
   pinMode(MidSwitch0, INPUT_PULLUP);
   pinMode(MidSwitch1, INPUT_PULLUP);
-  pinMode(BotSwitch0, INPUT_PULLUP);
+  //pinMode(BotSwitch0, INPUT_PULLUP);
   pinMode(BotSwitch1, INPUT_PULLUP);
 
   pinMode(StartButton, INPUT_PULLUP);

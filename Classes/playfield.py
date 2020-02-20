@@ -73,15 +73,15 @@ class Playfield:
         
     def setup_pins(self):
         # Setup all the pins for the switches on the playfield
-        self.switches["top"][0].pin = 11
-        self.switches["mid"][0].pin = 12
-        self.switches["bot"][0].pin = 13
-        self.switches["bot"][1].pin = 9
+        self.switches["top"][0].pin = 34
+        self.switches["mid"][0].pin = 42
+        self.switches["bot"][0].pin = 36
+        self.switches["bot"][1].pin = 43
 
         # Setup all the pins for the lights on the playfield
-        self.lights["top"][0].pin = 3 # Test Numbers
-        self.lights["mid"][0].pin = 4
-        self.lights["bot"][0].pin = 5
+        self.lights["top"][0].pin = 22 # Test Numbers
+        self.lights["mid"][0].pin = 99
+        self.lights["bot"][0].pin = 99
 
     def load_high_scores(self):
         try:
