@@ -43,7 +43,7 @@ def change_mode(new_mode):
 # Will use flipper.general_flipper_on_time if time_until_off is not set. 
 # Set it to 0 to hold
 def flipper_on(flipper, time_util_off=-1):
-    #print("ON: " + str(flipper.flipper_num))
+    print("ON: " + str(flipper.flipper_num))
     if flipper.on:
         return
     flipper.on = True
@@ -64,7 +64,7 @@ def flipper_on(flipper, time_util_off=-1):
             print("Tried to schedule flipper off: " + str(flipper.flipper_num))
 
 def flipper_off(flipper):
-    #print("OFF: " + str(flipper.flipper_num))
+    print("OFF: " + str(flipper.flipper_num))
     if not flipper.on:
         return
     flipper.on = False
@@ -242,11 +242,26 @@ def switch_top_0(data):
     switch.last_time_on = rospy.get_rostime().to_sec()
     # Do other things, score, etc.
     
+def switch_top_1(data):
+    switch = myPlay.switches["top"][1]
+    light = myPlay.lights["top"][0]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(500)
+    # Do other things, score, etc.
+
 def switch_mid_0(data):
     switch = myPlay.switches["mid"][0]
+<<<<<<< HEAD
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["mid"][0]
+=======
+    #light = myPlay.lights["mid"][0]
+    light = myPlay.lights["top"][0]
+>>>>>>> PDR pin numbers and play
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
@@ -257,9 +272,14 @@ def switch_mid_0(data):
 
 def switch_bot_0(data):
     switch = myPlay.switches["bot"][0]
+<<<<<<< HEAD
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["bot"][0]
+=======
+    #light = myPlay.lights["bot"][0]
+    light = myPlay.lights["top"][0]
+>>>>>>> PDR pin numbers and play
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
@@ -310,6 +330,7 @@ override_light_sub = rospy.Subscriber("override_light", override_light, handle_o
 
 # ROS subscribers for each switch that will exist on the playfield
 switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
+switch_top_1_sub = rospy.Subscriber("switch_top_1_triggered", Bool, switch_top_1)
 switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)
 switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
 switch_bot_1_sub = rospy.Subscriber("switch_bot_1_triggered", Bool, switch_bot_1)
@@ -396,8 +417,9 @@ if __name__ == "__main__":
             print("Done Setting up")
             #local_override_light("Blink_Med", light=myPlay.lights["top"][0])
             change_mode("Idle_Waiting")
-            #reset_all_components()
-            #change_mode("Normal_Play")
+            reset_all_components()
+            myPlay.setup_pins()
+            change_mode("Normal_Play")
 
         if myPlay.mode == "Normal_Play":
             print("Left: " + str(myPlay.left_flipper.on))

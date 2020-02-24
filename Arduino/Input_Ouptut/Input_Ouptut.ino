@@ -17,16 +17,16 @@
 #define BotLight1 99
 
 // Flipper Outputs
-#define LeftFlipper 32
-#define RightFlipper 33
+#define LeftFlipper 40
+#define RightFlipper 41
 
 // Switch Inputs - Playfield
 #define TopSwitch0 34 // Pop Bumper
-#define TopSwitch1 99
-#define MidSwitch0 42 // stand up
+#define TopSwitch1 46 // Spinner
+#define MidSwitch0 48 // stand up
 #define MidSwitch1 99
-#define BotSwitch0 36 // Slingshot
-#define BotSwitch1 43 // Drain
+#define BotSwitch0 33 // Slingshot
+#define BotSwitch1 49 // Drain
 
 // Switch Input - Start button
 #define StartButton 99 
