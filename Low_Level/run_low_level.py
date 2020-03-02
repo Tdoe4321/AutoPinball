@@ -26,6 +26,13 @@ import time
 # Capture ctl + c
 import signal
 
+# Method to check for switch debouncing
+def is_separate_trigger(switch):
+    if rospy.get_rostime().to_sec() - switch.last_time_on >= switch.debounce_time:
+        return True
+    else:
+        return False
+
 # Method to handle all the changeing of mode
 def change_mode(new_mode):
     print("Changing to new mode: " + new_mode)
@@ -219,39 +226,51 @@ def turn_off(light):
 # Callback for each switch on the playfield...
 def switch_top_0(data):
     switch = myPlay.switches["top"][0]
+    if not is_separate_trigger(switch):
+        return
     light = myPlay.lights["top"][0]
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     update_score(10000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
     # Do other things, score, etc.
     
 def switch_mid_0(data):
     switch = myPlay.switches["mid"][0]
+    if not is_separate_trigger(switch):
+        return
     light = myPlay.lights["mid"][0]
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     update_score(1000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
     # Do other things, score, etc.
 
 def switch_bot_0(data):
     switch = myPlay.switches["bot"][0]
+    if not is_separate_trigger(switch):
+        return
     light = myPlay.lights["bot"][0]
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     update_score(100)
+    switch.last_time_on = rospy.get_rostime().to_sec()
     # Do other things, score, etc.
 
 def switch_bot_1(data):
-    print("Ball Drained")
     switch = myPlay.switches["bot"][1]
+    if not is_separate_trigger(switch):
+        return
+    print("Ball Drained")
     new_switch_hit(switch.pin)
     change_mode("Final_Screen")
+    switch.last_time_on = rospy.get_rostime().to_sec()
 
 def switch_start_button(data):
     print("Start Button Pressed!")
