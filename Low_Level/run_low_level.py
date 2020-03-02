@@ -107,6 +107,10 @@ def reset_all_components():
     # Let the user know we are resetting the game
     print("Deleting all events")
     
+    # Turn off all flippers
+    flipper_off(myPlay.left_flipper)
+    flipper_off(myPlay.right_flipper)
+
     # Turn off all lights
     for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
         for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
@@ -269,6 +273,8 @@ def switch_bot_1(data):
         return
     print("Ball Drained")
     new_switch_hit(switch.pin)
+    flipper_off(myPlay.left_flipper)
+    flipper_off(myPlay.right_flipper)
     change_mode("Final_Screen")
     switch.last_time_on = rospy.get_rostime().to_sec()
 
