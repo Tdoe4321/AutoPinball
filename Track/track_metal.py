@@ -27,36 +27,45 @@ def draw_line(img, pts):
 		if pts[i - 1] is None or pts[i] is None:
 			continue
 		# otherwise, compute the thickness of the line and draw the connecting lines
-		thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
+		thickness = int(np.sqrt(line_length / float(i + 1)) * 2.5)
 		cv2.line(img, pts[i - 1], pts[i], (0, 0, 255), thickness)
         
+# Camera Object
 camera = cv2.VideoCapture(2)
 
+# Convolution filter
 kernel = np.matrix('-1 -1 -1; -1 10 -1; -1 -1 -1')
 
-pts = deque(maxlen=64)
-x_pts = deque(maxlen=64)
-y_pts = deque(maxlen=64)
-smooth_pts = deque(maxlen=64)
+# Drawing line
+line_length = 64
+pts = deque(maxlen=line_length)
+x_pts = deque(maxlen=line_length)
+y_pts = deque(maxlen=line_length)
+smooth_pts = deque(maxlen=line_length)
 
 # Let the camera startup and autofocus
 camera.read()
 time.sleep(1)
 
+# Capture the first frame to compare with in the binary difference
 ret, first_frame = camera.read()
 first_frame = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 
-THRESH_MAX = 1700
-THRESH_MIN = 1100
+# Trhesholds for size of the ball
+THRESH_MAX = 1500
+THRESH_MIN = 1000
 
+# Current coordinates for the ball
 ball_x = None
 ball_y = None
 
 if __name__ == "__main__":
 
     while True:    
+        # Grab current image
         ret, img = camera.read()
     
+        # Make it grayscale
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         ''' HOUGH CIRCLES TECHNIQUE
@@ -70,9 +79,10 @@ if __name__ == "__main__":
         # TO SHOW JUST TRESHHOLD STUFF
         #img = calculate_thresh(first_frame, img)
 
-    
+        # Get a list of contours
         cnts = calculate_thresh(first_frame, img)
         if cnts is not None:
+            # Draw them on the image
             cv2.drawContours(img, cnts, -1, (0, 255, 0), 3) 
             for c in cnts:
                 # if the contour is too small or too big, ignore it
@@ -83,6 +93,7 @@ if __name__ == "__main__":
                     ball_y = y+h/2
                     cv2.circle(img, (ball_x, ball_y), 20, (0,0,255), -1)
                     pts.appendleft((ball_x,ball_y))
+                    print("Contour size: " + str(cv2.contourArea(c)))
                     '''
                     x_pts.appendleft(ball_x)
                     y_pts.appendleft(ball_y)
@@ -91,6 +102,7 @@ if __name__ == "__main__":
                     '''
 
                 else:
+                    # If we didn't get one for the ball, set to None
                     ball_x = None
                     ball_y = None
 
@@ -104,10 +116,11 @@ if __name__ == "__main__":
 	        		continue
 	        	# otherwise, compute the thickness of the line and
 	        	# draw the connecting lines
-	        	thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
+	        	thickness = int(np.sqrt(line_length / float(i + 1)) * 2.5)
 	        	cv2.line(img, (int(smooth_pts[0][i - 1]),int(smooth_pts[1][i-1])), (int(smooth_pts[0][i]),int(smooth_pts[1][i])), (0, 0, 255), thickness)
         '''
 
+        # Draw connecting history line
         draw_line(img, pts)            
 
         # show the frame to our screen
