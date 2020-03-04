@@ -81,11 +81,14 @@ if __name__ == "__main__":
                     cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     ball_x = x+w/2
                     ball_y = y+h/2
+                    cv2.circle(img, (ball_x, ball_y), 20, (0,0,255), -1)
                     pts.appendleft((ball_x,ball_y))
+                    '''
                     x_pts.appendleft(ball_x)
                     y_pts.appendleft(ball_y)
                     if len(x_pts) > 9 and len(y_pts) > 9:
                         smooth_pts = signal.savgol_filter(x_pts, 9, 3),signal.savgol_filter(y_pts, 9, 3)
+                    '''
 
                 else:
                     ball_x = None
@@ -105,10 +108,7 @@ if __name__ == "__main__":
 	        	cv2.line(img, (int(smooth_pts[0][i - 1]),int(smooth_pts[1][i-1])), (int(smooth_pts[0][i]),int(smooth_pts[1][i])), (0, 0, 255), thickness)
         '''
 
-        draw_line(img, pts)
-
-        if ball_y is not None and ball_x is not None:
-            cv2.circle(img, (ball_x, ball_y), 20, (0,0,255), -1)
+        draw_line(img, pts)            
 
         # show the frame to our screen
         cv2.imshow("Frame", img)
