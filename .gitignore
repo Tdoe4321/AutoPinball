@@ -135,3 +135,6 @@ catkin_ws/devel/*
 
 # Highscores
 highscores.txt
+
+# VSCode
+.vscode

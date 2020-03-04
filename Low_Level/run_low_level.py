@@ -19,6 +19,7 @@ from std_msgs.msg import String
 from pinball_messages.srv import get_light, get_lightResponse
 from pinball_messages.srv import get_switch, get_switchResponse
 from pinball_messages.msg import override_light
+from pinball_messages.msg import flip_flipper
 
 # Time and scheduling
 import time
@@ -39,7 +40,7 @@ def change_mode(new_mode):
     myPlay.mode=new_mode
     update_message_pub.publish("MODE: " + new_mode)
 
-# Will use flipper.general_flipper_on_time if time_until_off is set. 
+# Will use flipper.general_flipper_on_time if time_until_off is not set. 
 # Set it to 0 to hold
 def flipper_on(flipper, time_util_off=-1):
     #print("ON: " + str(flipper.flipper_num))
@@ -70,13 +71,13 @@ def flipper_off(flipper):
     flipper_pub.publish(flipper.flipper_num * -1)
 
 def flip_flipper_callback(flipper_msg):
-    if flipper_msg.data == 1:
-        flipper_on(myPlay.left_flipper, 0)
-    elif flipper_msg.data == 2:
-        flipper_on(myPlay.right_flipper, 0)
-    elif flipper_msg.data == -1:
+    if flipper_msg.flipper == 1:
+        flipper_on(myPlay.left_flipper, flipper_msg.time)
+    elif flipper_msg.flipper == 2:
+        flipper_on(myPlay.right_flipper, flipper_msg.time)
+    elif flipper_msg.flipper == -1:
         flipper_off(myPlay.left_flipper)
-    elif flipper_msg.data == -2:
+    elif flipper_msg.flipper == -2:
         flipper_off(myPlay.right_flipper)
 
 # Schedule a time to turn a light on
@@ -334,7 +335,7 @@ switch_list_pub = rospy.Publisher('switch_list', Int32MultiArray, queue_size=10)
 flipper_pub = rospy.Publisher('flip_flipper', Int32, queue_size=10)
 
 # Flipper Subscribers
-flipper_sub = rospy.Subscriber('internal_flip_flipper', Int32, flip_flipper_callback)
+flipper_sub = rospy.Subscriber('internal_flip_flipper', flip_flipper, flip_flipper_callback)
 
 # Scheduler to keep track of when we want to turn on.off devices on the playfield
 schedule = BackgroundScheduler()

@@ -1,10 +1,19 @@
+# Computer Vision packages
 import cv2
-from matplotlib import pyplot as plt
-from math import factorial
 import numpy as np
+
+# Wait and time diff
 import time
+
+# List for points
 from collections import deque
+
+# Smooting algorithm
 from scipy import signal
+
+# ROS
+import rospy
+from pinball_messages.msg import flip_flipper
 
 def calculate_thresh(first_frame, current_frame):
     frame_delta = cv2.absdiff(first_frame, current_frame)
@@ -59,9 +68,15 @@ THRESH_MIN = 1000
 ball_x = None
 ball_y = None
 
-if __name__ == "__main__":
+# ROS objects
+publish_flipper = rospy.Publisher('internal_flip_flipper', flip_flipper, queue_size=10)
 
-    while True:    
+if __name__ == "__main__":
+    # Startup ROS node
+    rospy.init_node("Tracking_Ball")
+    time.sleep(1)
+    
+    while not rospy.is_shutdown():    
         # Grab current image
         ret, img = camera.read()
     

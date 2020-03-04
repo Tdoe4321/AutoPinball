@@ -51,6 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    override_light.msg
+   flip_flipper.msg
  )
 
 ## Generate services in the 'srv' folder
