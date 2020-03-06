@@ -69,15 +69,20 @@ ball_x = None
 ball_y = None
 
 # ROS objects
+rospy.init_node("Tracking_Ball")
 publish_flipper = rospy.Publisher('internal_flip_flipper', flip_flipper, queue_size=10)
 
 # Rectangle Contour
 left_flip = np.array([[213,416],[268,376],[142,272],[98,324]], dtype=np.int32)
 right_flip = np.array([[380,436],[528,346],[494,300],[353,387]], dtype=np.int32)
 
+# Track if we are currently flipping
+flipping = False
+last_flip_time = rospy.get_rostime().to_sec()
+flip_delta = 1
+
 if __name__ == "__main__":
     # Startup ROS node
-    rospy.init_node("Tracking_Ball")
     time.sleep(1)
     
     while not rospy.is_shutdown():    
@@ -103,31 +108,38 @@ if __name__ == "__main__":
         if cnts is not None:
             # Draw them on the image
             cv2.drawContours(img, cnts, -1, (0, 255, 0), 3) 
-            for c in cnts:
-                # if the contour is too small or too big, ignore it
-                if cv2.contourArea(c) < THRESH_MAX and cv2.contourArea(c) > THRESH_MIN:
-                    (x, y, w, h) = cv2.boundingRect(c)
-                    cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    ball_center = (x+w/2, y+h/2)
-                    cv2.circle(img, ball_center, 20, (0,0,255), 5)
-                    pts.appendleft(ball_center)
-                    #print("Contour size: " + str(cv2.contourArea(c)))
+            if not flipping:
+                for c in cnts:
+                    # if the contour is not too small or too big
+                    if cv2.contourArea(c) < THRESH_MAX and cv2.contourArea(c) > THRESH_MIN:
+                        (x, y, w, h) = cv2.boundingRect(c)
+                        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        ball_center = (x+w/2, y+h/2)
+                        cv2.circle(img, ball_center, 20, (0,0,255), 5)
+                        pts.appendleft(ball_center)
+                        #print("Contour size: " + str(cv2.contourArea(c)))
 
-                    if cv2.pointPolygonTest(left_flip, ball_center, False) > 0:
-                       print("FLIP LEFT!!!")
-                    if cv2.pointPolygonTest(right_flip, ball_center, False) > 0:
-                        print("FLIP RIGHT!!!!")
+                        if cv2.pointPolygonTest(left_flip, ball_center, False) > 0:
+                            flipping = True
+                            last_flip_time = rospy.get_rostime().to_sec()
+                            publish_flipper.publish(1, flip_delta)
+                            print("FLIP LEFT!!!")
+                        if cv2.pointPolygonTest(right_flip, ball_center, False) > 0:
+                            flipping = True
+                            last_flip_time = rospy.get_rostime().to_sec()
+                            publish_flipper.publish(2, flip_delta)
+                            print("FLIP RIGHT!!!!")
 
-                    '''
-                    x_pts.appendleft(ball_x)
-                    y_pts.appendleft(ball_y)
-                    if len(x_pts) > 9 and len(y_pts) > 9:
-                        smooth_pts = signal.savgol_filter(x_pts, 9, 3),signal.savgol_filter(y_pts, 9, 3)
-                    '''
+                        '''
+                        x_pts.appendleft(ball_x)
+                        y_pts.appendleft(ball_y)
+                        if len(x_pts) > 9 and len(y_pts) > 9:
+                            smooth_pts = signal.savgol_filter(x_pts, 9, 3),signal.savgol_filter(y_pts, 9, 3)
+                        '''
 
-                else:
-                    # If we didn't get one for the ball, set to None
-                    ball_center = (None, None)
+                    else:
+                        # If we didn't get one for the ball, set to None
+                        ball_center = (None, None)
 
         ''' LINE USING SMOOTHED POINTS
         if len(x_pts) > 9 and len(y_pts) > 9:
@@ -148,7 +160,11 @@ if __name__ == "__main__":
         cv2.drawContours(img, [right_flip], -1, (0,255,0), 3)
 
         # Draw connecting history line
-        draw_line(img, pts)            
+        draw_line(img, pts)
+
+        # Check if we need to reset the flippers
+        if (rospy.get_rostime().to_sec() - last_flip_time) > flip_delta:
+            flipping = False
 
         # show the frame to our screen
         cv2.imshow("Frame", img)
