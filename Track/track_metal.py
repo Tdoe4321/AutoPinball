@@ -37,7 +37,7 @@ def draw_line(img, pts):
 			continue
 		# otherwise, compute the thickness of the line and draw the connecting lines
 		thickness = int(np.sqrt(line_length / float(i + 1)) * 2.5)
-		cv2.line(img, pts[i - 1], pts[i], (0, 0, 255), thickness)
+		cv2.line(img, pts[i - 1], pts[i], (0, 0, 180), thickness)
         
 # Camera Object
 camera = cv2.VideoCapture(0)
@@ -87,10 +87,10 @@ if __name__ == "__main__":
     
     while not rospy.is_shutdown():    
         # Grab current image
-        ret, img = camera.read()
+        ret, raw = camera.read()
 
         # Make it grayscale
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.cvtColor(raw, cv2.COLOR_BGR2GRAY)
 
         ''' HOUGH CIRCLES TECHNIQUE
         circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 0.5, img.shape[0]/4, param1=220, param2=20, minRadius=0, maxRadius=100)
@@ -107,15 +107,15 @@ if __name__ == "__main__":
         cnts = calculate_thresh(first_frame, img)
         if cnts is not None:
             # Draw them on the image
-            cv2.drawContours(img, cnts, -1, (0, 255, 0), 3) 
+            cv2.drawContours(raw, cnts, -1, (100, 100, 100), 3) 
             if not flipping:
                 for c in cnts:
                     # if the contour is not too small or too big
                     if cv2.contourArea(c) < THRESH_MAX and cv2.contourArea(c) > THRESH_MIN:
                         (x, y, w, h) = cv2.boundingRect(c)
-                        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        cv2.rectangle(raw, (x, y), (x + w, y + h), (0, 0, 0), 2)
                         ball_center = (x+w/2, y+h/2)
-                        cv2.circle(img, ball_center, 20, (0,0,255), 5)
+                        cv2.circle(raw, ball_center, 20, (0,0,0), 5)
                         pts.appendleft(ball_center)
                         #print("Contour size: " + str(cv2.contourArea(c)))
 
@@ -156,18 +156,18 @@ if __name__ == "__main__":
         '''
 
         # Draw the left flipper and right flipper boxes
-        cv2.drawContours(img, [left_flip], -1, (0,255,0), 3)
-        cv2.drawContours(img, [right_flip], -1, (0,255,0), 3)
+        cv2.drawContours(raw, [left_flip], -1, (255,255,0), 3)
+        cv2.drawContours(raw, [right_flip], -1, (255,255,0), 3)
 
         # Draw connecting history line
-        draw_line(img, pts)
+        draw_line(raw, pts)
 
         # Check if we need to reset the flippers
         if (rospy.get_rostime().to_sec() - last_flip_time) > flip_delta:
             flipping = False
 
         # show the frame to our screen
-        cv2.imshow("Frame", img)
+        cv2.imshow("Frame", raw)
         key = cv2.waitKey(1) & 0xFF
  
 	    # if the 'q' key is pressed, stop the loop
