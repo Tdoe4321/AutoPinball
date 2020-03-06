@@ -40,7 +40,7 @@ def draw_line(img, pts):
 		cv2.line(img, pts[i - 1], pts[i], (0, 0, 255), thickness)
         
 # Camera Object
-camera = cv2.VideoCapture(2)
+camera = cv2.VideoCapture(0)
 
 # Convolution filter
 kernel = np.matrix('-1 -1 -1; -1 10 -1; -1 -1 -1')
@@ -71,6 +71,10 @@ ball_y = None
 # ROS objects
 publish_flipper = rospy.Publisher('internal_flip_flipper', flip_flipper, queue_size=10)
 
+# Rectangle Contour
+left_flip = np.array([[213,416],[268,376],[142,272],[98,324]], dtype=np.int32)
+right_flip = np.array([[380,436],[528,346],[494,300],[353,387]], dtype=np.int32)
+
 if __name__ == "__main__":
     # Startup ROS node
     rospy.init_node("Tracking_Ball")
@@ -79,7 +83,7 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():    
         # Grab current image
         ret, img = camera.read()
-    
+
         # Make it grayscale
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -104,11 +108,16 @@ if __name__ == "__main__":
                 if cv2.contourArea(c) < THRESH_MAX and cv2.contourArea(c) > THRESH_MIN:
                     (x, y, w, h) = cv2.boundingRect(c)
                     cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    ball_x = x+w/2
-                    ball_y = y+h/2
-                    cv2.circle(img, (ball_x, ball_y), 20, (0,0,255), -1)
-                    pts.appendleft((ball_x,ball_y))
-                    print("Contour size: " + str(cv2.contourArea(c)))
+                    ball_center = (x+w/2, y+h/2)
+                    cv2.circle(img, ball_center, 20, (0,0,255), 5)
+                    pts.appendleft(ball_center)
+                    #print("Contour size: " + str(cv2.contourArea(c)))
+
+                    if cv2.pointPolygonTest(left_flip, ball_center, False) > 0:
+                       print("FLIP LEFT!!!")
+                    if cv2.pointPolygonTest(right_flip, ball_center, False) > 0:
+                        print("FLIP RIGHT!!!!")
+
                     '''
                     x_pts.appendleft(ball_x)
                     y_pts.appendleft(ball_y)
@@ -118,8 +127,7 @@ if __name__ == "__main__":
 
                 else:
                     # If we didn't get one for the ball, set to None
-                    ball_x = None
-                    ball_y = None
+                    ball_center = (None, None)
 
         ''' LINE USING SMOOTHED POINTS
         if len(x_pts) > 9 and len(y_pts) > 9:
@@ -134,6 +142,10 @@ if __name__ == "__main__":
 	        	thickness = int(np.sqrt(line_length / float(i + 1)) * 2.5)
 	        	cv2.line(img, (int(smooth_pts[0][i - 1]),int(smooth_pts[1][i-1])), (int(smooth_pts[0][i]),int(smooth_pts[1][i])), (0, 0, 255), thickness)
         '''
+
+        # Draw the left flipper and right flipper boxes
+        cv2.drawContours(img, [left_flip], -1, (0,255,0), 3)
+        cv2.drawContours(img, [right_flip], -1, (0,255,0), 3)
 
         # Draw connecting history line
         draw_line(img, pts)            
