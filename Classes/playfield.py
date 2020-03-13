@@ -73,14 +73,15 @@ class Playfield:
         
     def setup_pins(self):
         # Setup all the pins for the switches on the playfield
-        self.switches["top"][0].pin = 34
-        self.switches["top"][1].pin = 46
-        self.switches["mid"][0].pin = 48
-        self.switches["bot"][0].pin = 33
+        self.switches["top"][0].pin = 99
+        self.switches["top"][1].pin = 99
+        self.switches["mid"][0].pin = 38
+        self.switches["mid"][1].pin = 99
+        self.switches["bot"][0].pin = 39
         self.switches["bot"][1].pin = 49
 
         # Setup all the pins for the lights on the playfield
-        self.lights["top"][0].pin = 22 # Test Numbers
+        self.lights["top"][0].pin = 99
         self.lights["mid"][0].pin = 99
         self.lights["bot"][0].pin = 99
 
