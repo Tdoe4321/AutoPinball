@@ -254,14 +254,9 @@ def switch_top_1(data):
 
 def switch_mid_0(data):
     switch = myPlay.switches["mid"][0]
-<<<<<<< HEAD
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["mid"][0]
-=======
-    #light = myPlay.lights["mid"][0]
-    light = myPlay.lights["top"][0]
->>>>>>> PDR pin numbers and play
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
@@ -272,14 +267,9 @@ def switch_mid_0(data):
 
 def switch_bot_0(data):
     switch = myPlay.switches["bot"][0]
-<<<<<<< HEAD
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["bot"][0]
-=======
-    #light = myPlay.lights["bot"][0]
-    light = myPlay.lights["top"][0]
->>>>>>> PDR pin numbers and play
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
