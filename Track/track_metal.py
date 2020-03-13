@@ -73,8 +73,8 @@ rospy.init_node("Tracking_Ball")
 publish_flipper = rospy.Publisher('internal_flip_flipper', flip_flipper, queue_size=10)
 
 # Rectangle Contour
-left_flip = np.array([[213,416],[268,376],[142,272],[98,324]], dtype=np.int32)
-right_flip = np.array([[380,436],[528,346],[494,300],[353,387]], dtype=np.int32)
+left_flip = np.array([[205,359],[280,409],[293,389],[214,334]], dtype=np.int32)
+right_flip = np.array([[422,371],[350,412],[341,389],[414,354]], dtype=np.int32)
 
 # Track if we are currently flipping
 flipping = False
