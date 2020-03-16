@@ -75,8 +75,10 @@ left_flip = np.array([[218,369],[301,428],[299,397],[293,368],[284,339],[262,326
 right_flip = np.array([[421,380],[328,427],[332,393],[351,360],[378,345],[406,354]], dtype=np.int32)
 
 # Track if we are currently flipping
-flipping = False
-last_flip_time = rospy.get_rostime().to_sec()
+left_flipping = False
+right_flipping = False
+left_last_flip_time = rospy.get_rostime().to_sec()
+right_last_flip_time = rospy.get_rostime().to_sec()
 flip_delta = 0.2
 
 if __name__ == "__main__":
@@ -98,27 +100,26 @@ if __name__ == "__main__":
         if cnts is not None:
             # Draw them on the image
             cv2.drawContours(raw, cnts, -1, (100, 100, 100), 3) 
-            if not flipping:
-                for c in cnts:
-                    # if the contour is not too small or too big
-                    if cv2.contourArea(c) < THRESH_MAX and cv2.contourArea(c) > THRESH_MIN:
-                        (x, y, w, h) = cv2.boundingRect(c)
-                        cv2.rectangle(raw, (x, y), (x + w, y + h), (0, 0, 0), 2)
-                        ball_center = (x+w/2, y+h/2)
-                        cv2.circle(raw, ball_center, 20, (0,0,0), 5)
-                        pts.appendleft(ball_center)
-                        #print("Contour size: " + str(cv2.contourArea(c)))
+            for c in cnts:
+                # if the contour is not too small or too big
+                if cv2.contourArea(c) < THRESH_MAX and cv2.contourArea(c) > THRESH_MIN:
+                    (x, y, w, h) = cv2.boundingRect(c)
+                    cv2.rectangle(raw, (x, y), (x + w, y + h), (0, 0, 0), 2)
+                    ball_center = (x+w/2, y+h/2)
+                    cv2.circle(raw, ball_center, 20, (0,0,0), 5)
+                    pts.appendleft(ball_center)
+                    #print("Contour size: " + str(cv2.contourArea(c)))
 
-                        if cv2.pointPolygonTest(left_flip, ball_center, False) > 0:
-                            flipping = True
-                            last_flip_time = rospy.get_rostime().to_sec()
-                            publish_flipper.publish(1, flip_delta)
-                            print("FLIP LEFT!!!")
-                        if cv2.pointPolygonTest(right_flip, ball_center, False) > 0:
-                            flipping = True
-                            last_flip_time = rospy.get_rostime().to_sec()
-                            publish_flipper.publish(2, flip_delta)
-                            print("FLIP RIGHT!!!!")
+                    if cv2.pointPolygonTest(left_flip, ball_center, False) > 0 and not left_flipping:
+                        left_flipping = True
+                        left_last_flip_time = rospy.get_rostime().to_sec()
+                        publish_flipper.publish(1, flip_delta)
+                        print("FLIP LEFT!!!")
+                    if cv2.pointPolygonTest(right_flip, ball_center, False) > 0 and not right_flipping:
+                        right_flipping = True
+                        right_last_flip_time = rospy.get_rostime().to_sec()
+                        publish_flipper.publish(2, flip_delta)
+                        print("FLIP RIGHT!!!!")
 
                         '''
                         x_pts.appendleft(ball_x)
@@ -150,8 +151,10 @@ if __name__ == "__main__":
         cv2.drawContours(raw, [right_flip], -1, (255,255,0), 3)
 
         # Check if we need to reset the flippers
-        if (rospy.get_rostime().to_sec() - last_flip_time) > flip_delta:
-            flipping = False
+        if (rospy.get_rostime().to_sec() - left_last_flip_time) > flip_delta:
+            left_flipping = False
+        if (rospy.get_rostime().to_sec() - right_last_flip_time) > flip_delta:
+            right_flipping = False
 
         # show the frame to our screen
         cv2.imshow("Frame", raw)
