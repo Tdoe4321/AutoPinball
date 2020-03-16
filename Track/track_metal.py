@@ -48,8 +48,6 @@ kernel = np.matrix('-1 -1 -1; -1 10 -1; -1 -1 -1')
 # Drawing line
 line_length = 64
 pts = deque(maxlen=line_length)
-x_pts = deque(maxlen=line_length)
-y_pts = deque(maxlen=line_length)
 smooth_pts = deque(maxlen=line_length)
 
 # Let the camera startup and autofocus
@@ -61,8 +59,8 @@ ret, first_frame = camera.read()
 first_frame = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 
 # Trhesholds for size of the ball
-THRESH_MAX = 1500
-THRESH_MIN = 1000
+THRESH_MAX = 1700
+THRESH_MIN = 1100
 
 # Current coordinates for the ball
 ball_x = None
@@ -73,13 +71,13 @@ rospy.init_node("Tracking_Ball")
 publish_flipper = rospy.Publisher('internal_flip_flipper', flip_flipper, queue_size=10)
 
 # Rectangle Contour
-left_flip = np.array([[205,359],[280,409],[293,389],[214,334]], dtype=np.int32)
-right_flip = np.array([[422,371],[350,412],[341,389],[414,354]], dtype=np.int32)
+left_flip = np.array([[218,369],[301,428],[299,397],[293,368],[284,339],[262,326],[241,333],[228,346]], dtype=np.int32)
+right_flip = np.array([[421,380],[328,427],[332,393],[351,360],[378,345],[406,354]], dtype=np.int32)
 
 # Track if we are currently flipping
 flipping = False
 last_flip_time = rospy.get_rostime().to_sec()
-flip_delta = 1
+flip_delta = 0.2
 
 if __name__ == "__main__":
     # Startup ROS node
@@ -91,14 +89,6 @@ if __name__ == "__main__":
 
         # Make it grayscale
         img = cv2.cvtColor(raw, cv2.COLOR_BGR2GRAY)
-
-        ''' HOUGH CIRCLES TECHNIQUE
-        circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 0.5, img.shape[0]/4, param1=220, param2=20, minRadius=0, maxRadius=100)
-        # param 2 = ~20, min = 10, max = 25
-        if circles is not None:
-            for x, y, r in circles[0]:
-                cv2.circle(img, (x,y), r, (0, 255, 255), 2)
-        '''
     
         # TO SHOW JUST TRESHHOLD STUFF
         #img = calculate_thresh(first_frame, img)
@@ -158,9 +148,6 @@ if __name__ == "__main__":
         # Draw the left flipper and right flipper boxes
         cv2.drawContours(raw, [left_flip], -1, (255,255,0), 3)
         cv2.drawContours(raw, [right_flip], -1, (255,255,0), 3)
-
-        # Draw connecting history line
-        draw_line(raw, pts)
 
         # Check if we need to reset the flippers
         if (rospy.get_rostime().to_sec() - last_flip_time) > flip_delta:

@@ -8,7 +8,7 @@ def draw_circle(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONDBLCLK:
         cv2.circle(img,(x,y),10,(0,0,0),3)
         ix,iy = x,y
-        print(ix, iy)
+        print("["+str(ix) + "," +  str(iy) + "],")
 
 # Create a black image, a window and bind the function to window
 camera = cv2.VideoCapture(0)
