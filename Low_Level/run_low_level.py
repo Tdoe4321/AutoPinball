@@ -244,12 +244,15 @@ def switch_top_0(data):
     
 def switch_top_1(data):
     switch = myPlay.switches["top"][1]
+    if not is_separate_trigger(switch):
+        return
     light = myPlay.lights["top"][0]
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
     update_score(500)
+    switch.last_time_on = rospy.get_rostime().to_sec()
     # Do other things, score, etc.
 
 def switch_mid_0(data):
