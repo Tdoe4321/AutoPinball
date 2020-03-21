@@ -5,7 +5,7 @@ import rospy
 
 from AutoPinball.msg import flip_flipper
 
-rospy.init_node("Keybaord_Flippers")
+import signal, sys
 
 publish_flipper = rospy.Publisher('internal_flip_flipper', flip_flipper, queue_size=10)
 
@@ -25,5 +25,13 @@ def on_release(key):
         # Stop listener
         return False
 
-with Listener(on_press=on_press, on_release=on_release) as listner:
-    listner.join()
+def signal_handler(sig, frame):
+    sys.exit()
+
+if __name__ == "__main__":
+    rospy.init_node("Keybaord_Flippers")
+    
+
+    with Listener(on_press=on_press, on_release=on_release) as listner:
+        signal.signal(signal.SIGINT, signal_handler)
+        listner.join()

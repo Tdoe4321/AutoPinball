@@ -1,5 +1,5 @@
 <launch>
-  <env name="ROSCONSOLE_FORMAT" value="[${severity}] - ${node}: [${time}] ${message}"/>
+  <env name="ROSCONSOLE_FORMAT" value="[${severity}${node}]: [${time}] ${message}"/>
 
   <node name="Low_Level_Node" pkg="AutoPinball" type="run_low_level.py" required="true" output="screen" />
   <node name="Track_Pinballs_Node" pkg="AutoPinball" type="track_metal.py" output="screen"/>

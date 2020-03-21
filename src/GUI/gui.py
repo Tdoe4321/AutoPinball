@@ -13,7 +13,7 @@ import rospy
 from std_msgs.msg import Int32
 from std_msgs.msg import String
 
-import signal
+import signal, sys
 
 class PinballGUI:
     def __init__(self):
@@ -32,6 +32,7 @@ def update_message(data, GUI):
 
 def signal_handler(sig, frame):
     myGUI.window.destroy()
+    sys.exit()
 
 myGUI = PinballGUI()
 
