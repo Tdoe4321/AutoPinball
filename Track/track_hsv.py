@@ -1,14 +1,9 @@
 # import the necessary packages
-from collections import deque
-from imutils.video import VideoStream
 import numpy as np
 import cv2
-import imutils
 import time
 
-# define the lower and upper boundaries of the "green"
-# ball in the HSV color space, then initialize the
-# list of tracked points
+# define the lower and upper boundaries
 hsvLower = (20, 120, 50)
 hsvUpper = (40, 220, 190)
 
@@ -29,7 +24,6 @@ while True:
     mask = cv2.dilate(mask, None, iterations=3)
     
     cnts, hie = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
 
     if len(cnts) >= 2:
         # Sort and grab the two biggest
