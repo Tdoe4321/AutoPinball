@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>AutoPinball</name>
+  <version>0.1.0</version>
+  <description>The AutoPinball package</description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <maintainer email="tdoe3@comcast.net">Tyler Gragg</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <license>MIT</license>
+
+  <!-- Author tags are optional, multiple are allowed, one per tag -->
+  <author email="tdoe3@comcast.net">Tyler Gragg</author>
+
+
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  
+  <build_depend>rospy</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>message_generation</build_depend>
+  
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+
+  <export>
+  </export>
+
+</package>

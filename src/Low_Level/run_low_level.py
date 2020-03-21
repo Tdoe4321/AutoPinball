@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Source correct files
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../Classes') # Still is not how I should be doing this, but...it works
@@ -16,10 +18,10 @@ from std_msgs.msg import Int32
 from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Bool
 from std_msgs.msg import String
-from pinball_messages.srv import get_light, get_lightResponse
-from pinball_messages.srv import get_switch, get_switchResponse
-from pinball_messages.msg import override_light
-from pinball_messages.msg import flip_flipper
+from AutoPinball.srv import get_light, get_lightResponse
+from AutoPinball.srv import get_switch, get_switchResponse
+from AutoPinball.msg import override_light
+from AutoPinball.msg import flip_flipper
 
 # Time and scheduling
 import time

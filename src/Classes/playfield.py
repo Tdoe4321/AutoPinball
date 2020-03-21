@@ -87,12 +87,12 @@ class Playfield:
 
     def load_high_scores(self):
         try:
-            with open(os.path.dirname(os.path.realpath(__file__)) + '/../highscores.txt', 'r') as f:
+            with open(os.path.dirname(os.path.realpath(__file__)) + '/../../highscores.txt', 'r') as f:
                 self.high_scores = pickle.load(f)
         except:
             print("Highscore file not there, generating...")
             self.generate_high_score()
-            with open(os.path.dirname(os.path.realpath(__file__)) + '/../highscores.txt', 'r') as f:
+            with open(os.path.dirname(os.path.realpath(__file__)) + '/../../highscores.txt', 'r') as f:
                 self.high_scores = pickle.load(f)
 
     def check_high_score(self, name, score):
@@ -106,7 +106,7 @@ class Playfield:
 
         pprint(self.high_scores)
 
-        with open(os.path.dirname(os.path.realpath(__file__)) + '/../highscores.txt', 'w') as f:
+        with open(os.path.dirname(os.path.realpath(__file__)) + '/../../highscores.txt', 'w') as f:
             pickle.dump(self.high_scores, f)
 
     def generate_high_score(self):
@@ -125,5 +125,5 @@ class Playfield:
 
         self.high_scores = sorted(high_scores, key=itemgetter(1), reverse=True)[:10]
 
-        with open(os.path.dirname(os.path.realpath(__file__)) + '/../highscores.txt', 'w') as f:
+        with open(os.path.dirname(os.path.realpath(__file__)) + '/../../highscores.txt', 'w') as f:
             pickle.dump(self.high_scores, f)

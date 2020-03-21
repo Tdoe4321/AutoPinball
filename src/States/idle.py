@@ -2,7 +2,7 @@ import rospy
 import smach
 
 from std_msgs.msg import Bool
-from pinball_messages.msg import override_light
+from AutoPinball.msg import override_light
 
 import time
 

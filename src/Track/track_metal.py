@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Computer Vision packages
 import cv2
 import numpy as np
@@ -13,7 +15,7 @@ from scipy import signal
 
 # ROS
 import rospy
-from pinball_messages.msg import flip_flipper
+from AutoPinball.msg import flip_flipper
 
 def calculate_thresh(first_frame, current_frame):
     frame_delta = cv2.absdiff(first_frame, current_frame)

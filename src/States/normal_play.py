@@ -4,9 +4,9 @@ import smach
 from std_msgs.msg import Int32
 from std_msgs.msg import Bool
 from std_msgs.msg import Int32MultiArray
-from pinball_messages.srv import get_light
-from pinball_messages.srv import get_switch
-from pinball_messages.msg import override_light
+from AutoPinball.srv import get_light
+from AutoPinball.srv import get_switch
+from AutoPinball.msg import override_light
 
 import time
 

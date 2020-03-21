@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+
 from pynput.keyboard import Key, Listener 
 import rospy
 
-from pinball_messages.msg import flip_flipper
+from AutoPinball.msg import flip_flipper
 
 rospy.init_node("Keybaord_Flippers")
 

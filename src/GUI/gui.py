@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # GUI
 import Tkinter as tk
 import tkFont
@@ -10,6 +12,8 @@ import rospy
 
 from std_msgs.msg import Int32
 from std_msgs.msg import String
+
+import signal
 
 class PinballGUI:
     def __init__(self):
@@ -26,9 +30,15 @@ def update_score(data, GUI):
 def update_message(data, GUI):
     GUI.message_label['text'] = data.data
 
+def signal_handler(sig, frame):
+    myGUI.window.destroy()
+
+myGUI = PinballGUI()
+
 if __name__ == "__main__":
-    myGUI = PinballGUI()
     rospy.init_node("Pinball_GUI")
+
+    signal.signal(signal.SIGINT, signal_handler)
     
     myGUI.score_label.grid(column=0, row=0)
     myGUI.message_label.grid(column=0, row=1, padx=(10,10), pady=(20,20))

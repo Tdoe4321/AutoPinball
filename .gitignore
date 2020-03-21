@@ -130,8 +130,7 @@ dmypy.json
 
 # MY STUFF
 # build and devel from catkin
-catkin_ws/build/*
-catkin_ws/devel/*
+build/*
 
 # Highscores
 highscores.txt
