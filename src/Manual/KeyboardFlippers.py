@@ -26,7 +26,7 @@ def on_release(key):
         return False
 
 def signal_handler(sig, frame):
-    sys.exit()
+    return False
 
 if __name__ == "__main__":
     rospy.init_node("Keybaord_Flippers")

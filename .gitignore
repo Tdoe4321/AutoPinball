@@ -137,3 +137,6 @@ highscores.txt
 
 # VSCode
 .vscode
+
+# swap files
+*.swp
