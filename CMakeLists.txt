@@ -9,6 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
+## OpenCV
+find_package(OpenCV REQUIRED)
+
 ################################################
 ## Declare ROS messages, services and actions ##
 ################################################
@@ -45,7 +48,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES AutoPinball
 #  CATKIN_DEPENDS message_generation rospy
-#  DEPENDS system_lib
+   DEPENDS opencv
 )
 
 ###########
@@ -67,3 +70,9 @@ include_directories(
 ## Testing ##
 #############
 
+#################
+## Executables ##
+#################
+add_executable(track_metal src/Track/track_metal.cpp)
+target_link_libraries(track_metal ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_dependencies(track_metal AutoPinball_generate_messages_cpp)
