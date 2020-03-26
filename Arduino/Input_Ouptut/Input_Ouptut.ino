@@ -16,9 +16,13 @@
 #define BotLight0 99
 #define BotLight1 99
 
-// Flipper Outputs
-#define LeftFlipper 40
-#define RightFlipper 41
+// Flipper Outputs (writing to flippers)
+#define LeftFlipperOutput 40
+#define RightFlipperOutput 41
+
+// Flipper Inputs (reading from flipper status)
+#define LeftFlipperInput 99
+#define RightFlipperInput 99
 
 // Switch Inputs - Playfield
 #define TopSwitch0 99
@@ -40,6 +44,9 @@ uint8_t BotSwitch1Last = 0;
 
 uint8_t StartButtonLast = 0;
 
+uint8_t LeftFlipperInputLast = 0;
+uint8_t RightFlipperInputLast = 0;
+
 // ROS Node Handle
 ros::NodeHandle nh;
 
@@ -55,20 +62,23 @@ ros::Publisher switch_bot_1_pub("switch_bot_1_triggered", &empty_msg);
 
 ros::Publisher start_button_pub("switch_start_button_triggered", &empty_msg);
 
+ros::Publisher left_flipper_input_pub("left_flipper_input_triggered", &empty_msg);
+ros::Publisher right_flipper_input_pub("right_flipper_input_triggered", &empty_msg);
+
 //TODO: Possibly add callback for each flipper - then I could change to bool
 void flip_callback(const std_msgs::Int32& flipper){
   // 1 = left_flipper ON, 2 = right_flipper ON, -1 = left_flipper OFF, -2 = right_flipper OFF
   if (flipper.data == 1){
-    digitalWrite(LeftFlipper, HIGH);
+    digitalWrite(LeftFlipperOutput, HIGH);
   }
   else if(flipper.data == 2){
-    digitalWrite(RightFlipper, HIGH); 
+    digitalWrite(RightFlipperOutput, HIGH);
   }
   else if(flipper.data == -1){
-    digitalWrite(LeftFlipper, LOW);
+    digitalWrite(LeftFlipperOutput, LOW);
   }
   else if(flipper.data == -2){
-    digitalWrite(RightFlipper, LOW);
+    digitalWrite(RightFlipperOutput, LOW);
   }
 }
 
@@ -98,6 +108,9 @@ void checkSwitches(){
   uint8_t curBotSwitch1 = digitalRead(BotSwitch1);
 
   uint8_t curStartButton = digitalRead(StartButton);
+
+  uint8_t curLeftFlipperInput = digitalRead(LeftFlipperInput);
+  uint8_t curRightFlipperInput = digitalRead(RightFlipperInput);
   
   if (!curTopSwitch0 && curTopSwitch0 != TopSwitch0Last){
     switch_top_0_pub.publish(&empty_msg);
@@ -127,6 +140,14 @@ void checkSwitches(){
     start_button_pub.publish(&empty_msg);
     nh.spinOnce();
   }
+  if (curLeftFlipperInput && curLeftFlipperInput != LeftFlipperInputLast){
+    left_flipper_input_pub.publish(&empty_msg);
+    nh.spinOnce();
+  }
+  if (curRightFlipperInput && curRightFlipperInput != RightFlipperInputLast){
+    right_flipper_input_pub.publish(&empty_msg);
+    nh.spinOnce();
+  }
 
   TopSwitch0Last = curTopSwitch0;
   TopSwitch1Last = curTopSwitch1;
@@ -135,6 +156,8 @@ void checkSwitches(){
   BotSwitch0Last = curBotSwitch0;
   BotSwitch1Last = curBotSwitch1;
   StartButtonLast = curStartButton;
+  LeftFlipperInputLast = curLeftFlipperInput;
+  RightFlipperInputLast = curRightFlipperInput;
 }
 
 void setup(){
@@ -145,10 +168,12 @@ void setup(){
   pinMode(MidLight1, OUTPUT);
   pinMode(BotLight0, OUTPUT);
   pinMode(BotLight1, OUTPUT);
-  pinMode(LeftFlipper, OUTPUT);
-  pinMode(RightFlipper, OUTPUT);
+  
+  pinMode(LeftFlipperOutput, OUTPUT);
+  pinMode(RightFlipperOutput, OUTPUT);
 
-  digitalWrite(LeftFlipper, LOW);
+  digitalWrite(LeftFlipperOutput, LOW);
+  digitalWrite(RightFlipperOutput, LOW);
 
   pinMode(TopSwitch0, INPUT_PULLUP);
   pinMode(TopSwitch1, INPUT_PULLUP);
@@ -158,6 +183,9 @@ void setup(){
   pinMode(BotSwitch1, INPUT_PULLUP);
 
   pinMode(StartButton, INPUT_PULLUP);
+
+  pinMode(LeftFlipperInput, INPUT);
+  pinMode(RightFlipperInput, INPUT);
   
   nh.initNode();
   
@@ -167,6 +195,9 @@ void setup(){
   nh.advertise(switch_mid_1_pub);
   nh.advertise(switch_bot_0_pub);
   nh.advertise(switch_bot_1_pub);
+
+  nh.advertise(left_flipper_input_pub);
+  nh.advertise(right_flipper_input_pub);
 
   nh.advertise(start_button_pub);
   
