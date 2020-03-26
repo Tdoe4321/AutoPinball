@@ -123,39 +123,18 @@ if __name__ == "__main__":
                         publish_flipper.publish(2, flip_delta)
                         print("FLIP RIGHT!!!!")
 
-                        '''
-                        x_pts.appendleft(ball_x)
-                        y_pts.appendleft(ball_y)
-                        if len(x_pts) > 9 and len(y_pts) > 9:
-                            smooth_pts = signal.savgol_filter(x_pts, 9, 3),signal.savgol_filter(y_pts, 9, 3)
-                        '''
-
                     else:
                         # If we didn't get one for the ball, set to None
                         ball_center = (None, None)
-
-        ''' LINE USING SMOOTHED POINTS
-        if len(x_pts) > 9 and len(y_pts) > 9:
-            # loop over the set of tracked points
-            for i in range(1, len(smooth_pts)):
-	        	# if either of the tracked points are None, ignore
-	        	# them
-	        	if smooth_pts[i - 1] is None or smooth_pts[i] is None:
-	        		continue
-	        	# otherwise, compute the thickness of the line and
-	        	# draw the connecting lines
-	        	thickness = int(np.sqrt(line_length / float(i + 1)) * 2.5)
-	        	cv2.line(img, (int(smooth_pts[0][i - 1]),int(smooth_pts[1][i-1])), (int(smooth_pts[0][i]),int(smooth_pts[1][i])), (0, 0, 255), thickness)
-        '''
 
         # Draw the left flipper and right flipper boxes
         cv2.drawContours(raw, [left_flip], -1, (255,255,0), 3)
         cv2.drawContours(raw, [right_flip], -1, (255,255,0), 3)
 
         # Check if we need to reset the flippers
-        if (rospy.get_rostime().to_sec() - left_last_flip_time) > flip_delta:
+        if (rospy.get_rostime().to_sec() - left_last_flip_time) > 2*flip_delta :
             left_flipping = False
-        if (rospy.get_rostime().to_sec() - right_last_flip_time) > flip_delta:
+        if (rospy.get_rostime().to_sec() - right_last_flip_time) > 2*flip_delta:
             right_flipping = False
 
         # show the frame to our screen

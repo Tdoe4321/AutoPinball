@@ -90,19 +90,30 @@ int main(int argc, char** argv){
         //Make it grayscale
         cv::cvtColor(raw, img, CV_BGR2GRAY);
 
+        // Returns the list of contours seen
         my_contour = calculate_thresh(first_frame, img, frame_delta);
+
+        // If that list is not empty...
         if (my_contour.size() > 0){
+            // Draw the contours
             cv::drawContours(raw, my_contour, -1, cv::Scalar(100, 100, 100), 3);
+            
+            // For every contour in the list...
             for(int i=0; i < my_contour.size(); i++){
+                // Find its area
                 double area = cv::contourArea(my_contour[i]);
+                
+                // If that area is between our thresholds...
                 if(area < THRESH_MAX && area > THRESH_MIN){
+                    //Create a bounding rectangle around the current contour
                     cv::Rect pinball_rect = cv::Rect(cv::boundingRect(my_contour[i]));
                     ball_center.x = pinball_rect.x + pinball_rect.width/2;
                     ball_center.y = pinball_rect.y + pinball_rect.height/2;
 
+                    // draw a circle around the ball
                     cv::circle(raw, ball_center, 20, cv::Scalar(0,0,0), 5);
 
-                    //std::cout << left_flip[0] << std::endl;
+                    // Test if the ball is inside the "flip zones" AND we are currently not flipping
                     if(cv::pointPolygonTest(left_flip[0], ball_center, false) >= 0 && !left_flipping){
                         left_flipping = true;
                         left_last_flip_time = ros::Time::now().toSec();
@@ -116,9 +127,14 @@ int main(int argc, char** argv){
                         std::cout << "RIGHT!" << std::endl;
                     }
                 }
+                // The current contours area did not fit our thresholds
+                else{
+                    ball_center.x = -1;
+                    ball_center.y = -1;
+                }
             }
         }
-
+        // There were no contours
         else{
             ball_center.x = -1;
             ball_center.y = -1;
@@ -128,6 +144,7 @@ int main(int argc, char** argv){
         cv::drawContours(raw, left_flip, -1, cv::Scalar(255,255,0), 3);
         cv::drawContours(raw, right_flip, -1, cv::Scalar(255,255,0), 3);
 
+        // Tell the flippers we are no longer flipping after a certain time
         if ((double)ros::Time::now().toSec() - left_last_flip_time > 2*flip_delta){
             left_flipping = false;
         }
