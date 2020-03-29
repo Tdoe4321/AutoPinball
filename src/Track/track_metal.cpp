@@ -6,6 +6,68 @@
 #include <iostream>
 #include <stdlib.h> 
 
+void draw_rotated_rectangle(cv::Mat& image, cv::RotatedRect rotatedRectangle){
+    cv::Scalar color = cv::Scalar(0, 255.0, 0); // green
+
+    // We take the edges that OpenCV calculated for us
+    cv::Point2f vertices2f[4];
+    rotatedRectangle.points(vertices2f);
+
+    // Convert them so we can use them in a fillConvexPoly
+    cv::Point vertices[4];    
+    for(int i = 0; i < 4; ++i){
+        vertices[i] = vertices2f[i];
+    }
+
+    // Now we can fill the rotated rectangle with our specified color
+    cv::fillConvexPoly(image, vertices, 4, color);
+}
+
+// Returns 2 contour, hopefull, both flippers
+std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question, double &time_of_last_flip_reset){
+    std::cout << "FIND FLIPPERS" << std::endl;
+    
+    std::vector<std::vector<cv::Point> > cnts;
+    int num_tries = 0;
+
+    while(cnts.size() != 2 && num_tries < 5){
+        cv::Mat mask;
+        cv::GaussianBlur(frame_in_question, mask, cv::Size(15,15), 0);
+        cv::cvtColor(mask, mask, cv::COLOR_BGR2HSV);
+
+        cv::inRange(mask, cv::Scalar(20,120,59), cv::Scalar(40,220,190), mask);
+        cv::erode(mask, mask, NULL, cv::Point(-1,-1), 3);
+        cv::dilate(mask, mask, NULL, cv::Point(-1,-1), 3);
+
+        cv::findContours(mask, cnts, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        std::cout << cnts.size() << std::endl;
+        num_tries++;
+    }
+
+    time_of_last_flip_reset = ros::Time::now().toSec();
+
+    if(num_tries >= 5){
+        std::vector<cv::RotatedRect> empty;
+        std::cout << "EMPTY" << std::endl;
+        return empty;
+    }
+    else{
+        std::cout << "NOT EMPTY" << std::endl;
+        std::vector<cv::RotatedRect> rect_list;
+        cv::RotatedRect left_rect = cv::minAreaRect(cnts[0]);
+        cv::RotatedRect right_rect = cv::minAreaRect(cnts[1]);
+
+        if(left_rect.center.x > right_rect.center.x){
+            left_rect = cv::minAreaRect(cnts[1]);
+            right_rect = cv::minAreaRect(cnts[0]);
+        }
+
+        rect_list.push_back(left_rect);
+        rect_list.push_back(right_rect);
+        return rect_list;
+    }
+}
+
 std::vector<std::vector<cv::Point> > calculate_thresh(cv::Mat first_frame, cv::Mat current_frame, cv::Mat &frame_delta){
     cv::absdiff(first_frame, current_frame, frame_delta);
     cv::GaussianBlur(frame_delta, frame_delta, cv::Size(7,7), 0);
@@ -38,6 +100,7 @@ int main(int argc, char** argv){
     cv::Mat first_frame;
     cv::Mat img;
     cv::Mat frame_delta;
+    cv::Mat raw_display;
 
     //get the first frame setup
     camera >> first_frame;
@@ -78,12 +141,19 @@ int main(int argc, char** argv){
     // Set the initial ball center to off screen
     cv::Point ball_center(-1,-1);
 
+    // Last time we reset the flipper position
+    double time_of_last_flip_reset = ros::Time::now().toSec();
+    std::vector<cv::RotatedRect> flipper_rects;
+
     while(ros::ok()){
         // Put new image into frame
         camera >> raw;
 
         // end of video stream
-        if( raw.empty() ) break; 
+        if( raw.empty() ) break;
+
+        // get a copy for displaying purposes
+        raw_display = raw.clone();
 
         //Make it grayscale
         cv::cvtColor(raw, img, CV_BGR2GRAY);
@@ -94,7 +164,7 @@ int main(int argc, char** argv){
         // If that list is not empty...
         if (my_contour.size() > 0){
             // Draw the contours
-            cv::drawContours(raw, my_contour, -1, cv::Scalar(100, 100, 100), 3);
+            cv::drawContours(raw_display, my_contour, -1, cv::Scalar(100, 100, 100), 3);
             
             // For every contour in the list...
             for(int i=0; i < my_contour.size(); i++){
@@ -109,7 +179,7 @@ int main(int argc, char** argv){
                     ball_center.y = pinball_rect.y + pinball_rect.height/2;
 
                     // draw a circle around the ball
-                    cv::circle(raw, ball_center, 20, cv::Scalar(0,0,0), 5);
+                    cv::circle(raw_display, ball_center, 20, cv::Scalar(0,0,0), 5);
 
                     // Test if the ball is inside the "flip zones" AND we are currently not flipping
                     if(cv::pointPolygonTest(left_flip[0], ball_center, false) >= 0 && !left_flipping){
@@ -139,8 +209,8 @@ int main(int argc, char** argv){
         }
 
         // Draw the left flipper and right flipper boxes
-        cv::drawContours(raw, left_flip, -1, cv::Scalar(255,255,0), 3);
-        cv::drawContours(raw, right_flip, -1, cv::Scalar(255,255,0), 3);
+        cv::drawContours(raw_display, left_flip, -1, cv::Scalar(255,255,0), 3);
+        cv::drawContours(raw_display, right_flip, -1, cv::Scalar(255,255,0), 3);
 
         // Tell the flippers we are no longer flipping after a certain time
         if ((double)ros::Time::now().toSec() - left_last_flip_time > 2*flip_delta){
@@ -150,8 +220,24 @@ int main(int argc, char** argv){
             right_flipping = false;
         }
 
+        if ((double)ros::Time::now().toSec() - time_of_last_flip_reset > 10){
+            flipper_rects = find_flippers(raw, time_of_last_flip_reset);
+        }
+        /*
+        Game plan for future Tyler:
+        1. For each individual contour, calculate a minAreaRect
+        2. Get the center and sort into lef/right flippers
+        3. Write a function that can rotate a contour. 
+        4. Rotate it to match the degree of rotation of the RotatedRect
+        5. Translate it over the RotatedRect
+        */
+
+        for(int i = 0; i < flipper_rects.size(); i++){
+            draw_rotated_rectangle(raw_display, flipper_rects[i]);
+        }
+
         // Show video in new window
-        cv::imshow("Frame", raw);
+        cv::imshow("Frame", raw_display);
 
         // stop capturing by pressing q
         if( cv::waitKey(10) == 'q' ) break;  
