@@ -6,6 +6,26 @@
 #include <iostream>
 #include <stdlib.h> 
 
+
+// Given a center point and radius, converts a circle to a simple polygon with N sides
+void circle_to_polygon(int N, cv::Point center_point, int radius, std::vector<std::vector<cv::Point>> &P){
+    std::vector<cv::Point> temp_list;
+    for(int i=0;i<N;i++) {
+        temp_list.push_back(cv::Point((int)round(center_point.x + radius * cos(i * 2 * CV_PI / N)), (int)round(center_point.y + radius * sin(i * 2 * CV_PI / N))));
+    }
+    P.push_back(temp_list);
+}
+
+// Given a Vec3f Circle, converts it into a simple polygon with N sides
+void circle_to_polygon(int N, cv::Vec3f circle, std::vector<std::vector<cv::Point>> &P){
+    std::vector<cv::Point> temp_list;
+    for(int i=0;i<N;i++) {
+        temp_list.push_back(cv::Point((int)round(circle[0] + circle[2] * cos(i * 2 * CV_PI / N)), (int)round(circle[1] + circle[2] * sin(i * 2 * CV_PI / N))));
+    }
+    P.push_back(temp_list);
+}
+
+// Draws a rotated rectangle on the provided image
 void draw_rotated_rectangle(cv::Mat& image, cv::RotatedRect rotatedRectangle){
     cv::Scalar color = cv::Scalar(0, 255.0, 0); // green
 
@@ -23,8 +43,8 @@ void draw_rotated_rectangle(cv::Mat& image, cv::RotatedRect rotatedRectangle){
     cv::fillConvexPoly(image, vertices, 4, color);
 }
 
-// Returns 2 contour, hopefull, both flippers
-std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question, double &time_of_last_flip_reset){
+// Returns 2 contour, hopefully, both flippers
+std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question){
     std::cout << "FIND FLIPPERS" << std::endl;
     
     std::vector<std::vector<cv::Point> > cnts;
@@ -43,8 +63,6 @@ std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question, double &ti
         std::cout << cnts.size() << std::endl;
         num_tries++;
     }
-
-    time_of_last_flip_reset = ros::Time::now().toSec();
 
     if(num_tries >= 5){
         std::vector<cv::RotatedRect> empty;
@@ -67,6 +85,65 @@ std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question, double &ti
         return rect_list;
     }
 }
+
+// Updates the left and right flipper polygons
+bool reset_flippers(cv::Mat raw, std::vector<std::vector<cv::Point>> &left_flip, std::vector<std::vector<cv::Point>> &right_flip, std::vector<cv::RotatedRect> &flipper_rects,
+                    int circle_polygon_sides = 25, int circle_radius = 130,
+                    int tune_circle_trim_horizontal = 40, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 40, int tune_circle_shift_vertical = 0){
+    flipper_rects = find_flippers(raw);
+    // If we did only find 2 flippers...
+    if (flipper_rects.size() == 2){
+        // Clear the old shapes
+        left_flip.clear();
+        right_flip.clear();
+
+        // Get the verticies of the rectangles
+        cv::Point2f left_verticies[4], right_verticies[4];
+        cv::Point left_center, right_center;
+        flipper_rects[0].points(left_verticies);
+        flipper_rects[1].points(right_verticies);
+
+        // Find the outter two points on both rectangles
+        left_center.x = (int)(left_verticies[2].x + left_verticies[1].x) / 2;
+        left_center.y = (int)(left_verticies[2].y + left_verticies[1].y) / 2;
+        right_center.x = (int)(right_verticies[2].x + right_verticies[3].x) / 2;
+        right_center.y = (int)(right_verticies[2].y + right_verticies[3].y) / 2;
+
+        // Put a "circle" over the center of rotation
+        circle_to_polygon(circle_polygon_sides, left_center,  circle_radius, left_flip);
+        circle_to_polygon(circle_polygon_sides, right_center, circle_radius, right_flip);
+
+        // The integers of where the gap in the large circle is
+        int left_gap = 0;
+        int right_gap = 0;
+
+        //remove all points outside the flipper range and add in a point at the pivot point
+        for(int i = 0; i < left_flip[0].size(); i++){
+            if (left_flip[0][i].x < left_center.x + tune_circle_trim_horizontal || left_flip[0][i].y > left_verticies[0].y + tune_circle_trim_vertical){
+                left_flip[0].erase(left_flip[0].begin() + i);
+                left_gap = i;
+                i--;
+            }
+        }
+
+        left_center.x += tune_circle_shift_horizontal;
+        left_center.y += tune_circle_shift_vertical;
+        left_flip[0].insert(left_flip[0].begin() + left_gap, left_center);
+
+        for(int i = 0; i < right_flip[0].size(); i++){
+            if (right_flip[0][i].x > right_center.x - tune_circle_trim_horizontal || right_flip[0][i].y > right_verticies[0].y + tune_circle_trim_vertical){
+                right_flip[0].erase(right_flip[0].begin() + i);
+                right_gap = i;
+                i--;
+            }
+        }
+
+        right_center.x -= tune_circle_shift_horizontal;
+        right_center.x += tune_circle_shift_vertical;
+        right_flip[0].insert(right_flip[0].begin() + right_gap, right_center);
+    }
+}
+
 
 std::vector<std::vector<cv::Point> > calculate_thresh(cv::Mat first_frame, cv::Mat current_frame, cv::Mat &frame_delta){
     cv::absdiff(first_frame, current_frame, frame_delta);
@@ -145,6 +222,16 @@ int main(int argc, char** argv){
     double time_of_last_flip_reset = ros::Time::now().toSec();
     std::vector<cv::RotatedRect> flipper_rects;
 
+    // Try and setup the flipper locations
+    for(int i = 0; i < 15; i++){
+        camera >> raw;
+        if(reset_flippers(raw, left_flip, right_flip, flipper_rects)){
+            time_of_last_flip_reset = ros::Time::now().toSec();
+            break;
+       }
+       sleep(1);
+    }
+
     while(ros::ok()){
         // Put new image into frame
         camera >> raw;
@@ -220,17 +307,11 @@ int main(int argc, char** argv){
             right_flipping = false;
         }
 
-        if ((double)ros::Time::now().toSec() - time_of_last_flip_reset > 10){
-            flipper_rects = find_flippers(raw, time_of_last_flip_reset);
+        // Periodically, reset the flipper shapes
+        if ((double)ros::Time::now().toSec() - time_of_last_flip_reset > 30 && !left_flipping && !right_flipping && ball_center.x == -1){
+            reset_flippers(raw, left_flip, right_flip, flipper_rects);
+            time_of_last_flip_reset = ros::Time::now().toSec();
         }
-        /*
-        Game plan for future Tyler:
-        1. For each individual contour, calculate a minAreaRect
-        2. Get the center and sort into lef/right flippers
-        3. Write a function that can rotate a contour. 
-        4. Rotate it to match the degree of rotation of the RotatedRect
-        5. Translate it over the RotatedRect
-        */
 
         for(int i = 0; i < flipper_rects.size(); i++){
             draw_rotated_rectangle(raw_display, flipper_rects[i]);
