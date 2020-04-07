@@ -163,11 +163,12 @@ int main(int argc, char** argv){
     ros::Publisher publish_flipper = nh.advertise<AutoPinball::flip_flipper>("internal_flip_flipper", 10);
 
 
-    // Camera object
-    cv::VideoCapture camera(0);
-    
+    int camera_num = 2;
 
-    if(!camera.open(0)){
+    // Camera object
+    cv::VideoCapture camera(camera_num);
+
+    if(!camera.open(camera_num)){
         std::cout << "Camera did not open properly" << std::endl;
         return 0;
     }
@@ -321,8 +322,11 @@ int main(int argc, char** argv){
         cv::imshow("Frame", raw_display);
 
         // stop capturing by pressing q
-        if( cv::waitKey(10) == 'q' ) break;  
+        if( cv::waitKey(10) == 'q' ) {
+            camera.release();
+            break;
+        }  
     }
-
+    
     return 0;
 }
