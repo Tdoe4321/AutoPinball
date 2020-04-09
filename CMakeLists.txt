@@ -62,6 +62,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+include_directories(${openCV_INCLUDE_DIRS})
+
 #############
 ## Install ##
 #############
