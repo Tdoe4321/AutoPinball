@@ -231,34 +231,10 @@ def turn_off(light):
     #print("off")
 
 # Callback for each switch on the playfield...
-def switch_top_0(data):
+#TODO: update scores for all switches - see switch_top_0 for placement and use
+################  TOP ################
+def switch_top_0(data): # Left Orbit 
     switch = myPlay.switches["top"][0]
-    if not is_separate_trigger(switch):
-        return
-    light = myPlay.lights["top"][0]
-    if light.override_light == "None":
-        turn_on(light)
-    switch.num_times_triggered += 1
-    new_switch_hit(switch.pin)
-    update_score(10000)
-    switch.last_time_on = rospy.get_rostime().to_sec()
-    # Do other things, score, etc.
-    
-def switch_top_1(data):
-    switch = myPlay.switches["top"][1]
-    if not is_separate_trigger(switch):
-        return
-    light = myPlay.lights["top"][0]
-    if light.override_light == "None":
-        turn_on(light)
-    switch.num_times_triggered += 1
-    new_switch_hit(switch.pin)
-    update_score(500)
-    switch.last_time_on = rospy.get_rostime().to_sec()
-    # Do other things, score, etc.
-
-def switch_mid_0(data):
-    switch = myPlay.switches["mid"][0]
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["mid"][0]
@@ -268,9 +244,139 @@ def switch_mid_0(data):
     new_switch_hit(switch.pin)
     update_score(1000)
     switch.last_time_on = rospy.get_rostime().to_sec()
-    # Do other things, score, etc.
+    
+def switch_top_1(data): # Left Bumper
+    switch = myPlay.switches["top"][1]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["top"][0]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(100)
+    switch.last_time_on = rospy.get_rostime().to_sec()
 
-def switch_bot_0(data):
+def switch_top_2(data): # Middle Bumper
+    switch = myPlay.switches["top"][2]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["top"][1]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(100)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_top_3(data): # Right Bumper
+    switch = myPlay.switches["top"][3]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["top"][2]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(100)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_top_4(data): # Right Orbit
+    switch = myPlay.switches["top"][4]
+    if not is_separate_trigger(switch):
+        return
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(1000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_top_5(data): # Spinner
+    switch = myPlay.switches["top"][5]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["mid"][7]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(50)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+################  MID ################
+def switch_mid_0(data): # Left plafield lane
+    switch = myPlay.switches["mid"][0]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["mid"][1]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(1000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_mid_1(data): # Left Standup
+    switch = myPlay.switches["mid"][1]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["mid"][2]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(3000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_mid_2(data): # Middle Rollover
+    switch = myPlay.switches["mid"][2]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["mid"][3]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(10000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_mid_3(data): # Right Standup
+    switch = myPlay.switches["mid"][3]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["mid"][4]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(3000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_mid_4(data): # Right playfield lane
+    switch = myPlay.switches["mid"][4]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["mid"][5]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(1000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_mid_5(data): # Right Ramp
+    switch = myPlay.switches["mid"][5]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["mid"][6]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(1000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+################  BOT ################
+def switch_bot_0(data): # Left Outlane
     switch = myPlay.switches["bot"][0]
     if not is_separate_trigger(switch):
         return
@@ -279,12 +385,81 @@ def switch_bot_0(data):
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    update_score(5000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_bot_1(data): # Left Inlane
+    switch = myPlay.switches["bot"][1]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["bot"][1]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(500)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_bot_2(data): # Left Slingshot
+    switch = myPlay.switches["bot"][2]
+    if not is_separate_trigger(switch):
+        return
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
     update_score(100)
     switch.last_time_on = rospy.get_rostime().to_sec()
-    # Do other things, score, etc.
 
-def switch_bot_1(data):
-    switch = myPlay.switches["bot"][1]
+def switch_bot_3(data): # Right Slingshot
+    switch = myPlay.switches["bot"][3]
+    if not is_separate_trigger(switch):
+        return
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(100)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_bot_4(data): # Right Inlane
+    switch = myPlay.switches["bot"][4]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["bot"][2]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(500)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_bot_5(data): # Right Outlane
+    switch = myPlay.switches["bot"][5]
+    if not is_separate_trigger(switch):
+        return
+    light = myPlay.lights["bot"][3]
+    if light.override_light == "None":
+        turn_on(light)
+    switch.num_times_triggered += 1
+    new_switch_hit(switch.pin)
+    update_score(5000)
+    switch.last_time_on = rospy.get_rostime().to_sec()
+
+def switch_bot_6(data): # Left Flipper
+    switch = myPlay.switches["bot"][6]
+    if not is_separate_trigger(switch):
+        return
+    switch.num_times_triggered += 1
+    switch.last_time_on = rospy.get_rostime().to_sec()
+    #TODO: Add stuff about shift operator
+
+def switch_bot_7(data): # Right Flipper
+    switch = myPlay.switches["bot"][7]
+    if not is_separate_trigger(switch):
+        return
+    switch.num_times_triggered += 1
+    switch.last_time_on = rospy.get_rostime().to_sec()
+    #TODO: Add stuff about shift operator
+
+def switch_bot_8(data):
+    switch = myPlay.switches["bot"][8]
     if not is_separate_trigger(switch):
         return
     print("Ball Drained")
@@ -294,6 +469,7 @@ def switch_bot_1(data):
     change_mode("Final_Screen")
     switch.last_time_on = rospy.get_rostime().to_sec()
 
+################  OTHER ################
 def switch_start_button(data):
     print("Start Button Pressed!")
     reset_all_components()
@@ -324,11 +500,32 @@ get_switch_service = rospy.Service('get_switch', get_switch, handle_get_switch)
 override_light_sub = rospy.Subscriber("override_light", override_light, handle_override_light)
 
 # ROS subscribers for each switch that will exist on the playfield
+# TOP
 switch_top_0_sub = rospy.Subscriber("switch_top_0_triggered", Bool, switch_top_0)
 switch_top_1_sub = rospy.Subscriber("switch_top_1_triggered", Bool, switch_top_1)
+switch_top_2_sub = rospy.Subscriber("switch_top_2_triggered", Bool, switch_top_2)
+switch_top_3_sub = rospy.Subscriber("switch_top_3_triggered", Bool, switch_top_3)
+switch_top_4_sub = rospy.Subscriber("switch_top_4_triggered", Bool, switch_top_4)
+switch_top_5_sub = rospy.Subscriber("switch_top_5_triggered", Bool, switch_top_5)
+
+# MID
 switch_mid_0_sub = rospy.Subscriber("switch_mid_0_triggered", Bool, switch_mid_0)
+switch_mid_1_sub = rospy.Subscriber("switch_mid_1_triggered", Bool, switch_mid_1)
+switch_mid_2_sub = rospy.Subscriber("switch_mid_2_triggered", Bool, switch_mid_2)
+switch_mid_3_sub = rospy.Subscriber("switch_mid_3_triggered", Bool, switch_mid_3)
+switch_mid_4_sub = rospy.Subscriber("switch_mid_4_triggered", Bool, switch_mid_4)
+switch_mid_5_sub = rospy.Subscriber("switch_mid_5_triggered", Bool, switch_mid_5)
+
+# BOT
 switch_bot_0_sub = rospy.Subscriber("switch_bot_0_triggered", Bool, switch_bot_0)
 switch_bot_1_sub = rospy.Subscriber("switch_bot_1_triggered", Bool, switch_bot_1)
+switch_bot_2_sub = rospy.Subscriber("switch_bot_2_triggered", Bool, switch_bot_2)
+switch_bot_3_sub = rospy.Subscriber("switch_bot_3_triggered", Bool, switch_bot_3)
+switch_bot_4_sub = rospy.Subscriber("switch_bot_4_triggered", Bool, switch_bot_4)
+switch_bot_5_sub = rospy.Subscriber("switch_bot_5_triggered", Bool, switch_bot_5)
+switch_bot_6_sub = rospy.Subscriber("switch_bot_6_triggered", Bool, switch_bot_6)
+switch_bot_7_sub = rospy.Subscriber("switch_bot_7_triggered", Bool, switch_bot_7)
+switch_bot_8_sub = rospy.Subscriber("switch_bot_8_triggered", Bool, switch_bot_8)
 
 # ROS subscirber that checkes when the start button is pressed
 switch_start_button_sub = rospy.Subscriber("switch_start_button_triggered", Bool, switch_start_button)

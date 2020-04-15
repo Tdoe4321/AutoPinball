@@ -16,13 +16,13 @@ class Playfield:
     def __init__(self, 
                 lights = {
                 "top" : deque([Light(), Light(), Light()]), 
-                "mid" : deque([Light(), Light(), Light()]), 
-                "bot" : deque([Light(), Light(), Light()])
+                "mid" : deque([Light(), Light(), Light(), Light(), Light(), Light(), Light(), Light()]), 
+                "bot" : deque([Light(), Light(), Light(), Light()])
                 }, 
                 switches = {
-                "top" : deque([Switch(), Switch(), Switch]), 
-                "mid" : deque([Switch(), Switch(), Switch]), 
-                "bot" : deque([Switch(), Switch(), Switch])
+                "top" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch]), 
+                "mid" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch]), 
+                "bot" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch])
                 }, 
                 score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None,
                 left_flipper = Flipper(flipper_num=1), right_flipper = Flipper(flipper_num=2)): 
@@ -41,16 +41,14 @@ class Playfield:
         
     def reset(self):
         self.lights = {
-            "top" : [Light(), Light(), Light()], 
-            "mid" : [Light(), Light(), Light()], 
-            "bot" : [Light(), Light(), Light()]
-        }
+                "top" : deque([Light(), Light(), Light()]), 
+                "mid" : deque([Light(), Light(), Light(), Light(), Light(), Light(), Light(), Light()]), 
+                "bot" : deque([Light(), Light(), Light(), Light()])}
 
         self.switches = {
-            "top" : [Switch(), Switch(), Switch], 
-            "mid" : [Switch(), Switch(), Switch], 
-            "bot" : [Switch(), Switch(), Switch]
-        }
+                "top" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch]), 
+                "mid" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch]), 
+                "bot" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch])}
 
         # Score calculations
         self.score = 0
@@ -73,17 +71,54 @@ class Playfield:
         
     def setup_pins(self):
         # Setup all the pins for the switches on the playfield
+        # Top row
         self.switches["top"][0].pin = 99
         self.switches["top"][1].pin = 99
-        self.switches["mid"][0].pin = 38
+        self.switches["top"][2].pin = 99
+        self.switches["top"][3].pin = 99
+        self.switches["top"][4].pin = 99
+        self.switches["top"][5].pin = 99
+
+        # Mid row
+        self.switches["mid"][0].pin = 99
         self.switches["mid"][1].pin = 99
-        self.switches["bot"][0].pin = 39
-        self.switches["bot"][1].pin = 49
+        self.switches["mid"][2].pin = 99
+        self.switches["mid"][3].pin = 99
+        self.switches["mid"][4].pin = 99
+        self.switches["mid"][5].pin = 99
+        
+        # Bot row
+        self.switches["bot"][0].pin = 99
+        self.switches["bot"][1].pin = 99
+        self.switches["bot"][2].pin = 99
+        self.switches["bot"][3].pin = 99
+        self.switches["bot"][4].pin = 99
+        self.switches["bot"][5].pin = 99
+        self.switches["bot"][6].pin = 99
+        self.switches["bot"][7].pin = 99
+        self.switches["bot"][8].pin = 99
 
         # Setup all the pins for the lights on the playfield
+        # Top row
         self.lights["top"][0].pin = 99
+        self.lights["top"][1].pin = 99
+        self.lights["top"][2].pin = 99
+        
+        # Mid row
         self.lights["mid"][0].pin = 99
+        self.lights["mid"][1].pin = 99
+        self.lights["mid"][2].pin = 99
+        self.lights["mid"][3].pin = 99
+        self.lights["mid"][4].pin = 99
+        self.lights["mid"][5].pin = 99
+        self.lights["mid"][6].pin = 99
+        self.lights["mid"][7].pin = 99
+        
+        # Bot row
         self.lights["bot"][0].pin = 99
+        self.lights["bot"][1].pin = 99
+        self.lights["bot"][2].pin = 99
+        self.lights["bot"][3].pin = 99
 
     def load_high_scores(self):
         try:
