@@ -692,10 +692,6 @@ if __name__ == "__main__":
             change_mode("Normal_Play")
             
         if myPlay.mode == "Normal_Play":
-            #print("Left: " + str(myPlay.left_flipper.on))
-            #print("Right: " + str(myPlay.right_flipper.on))
-            #print(myPlay.lights["top"][0].override_light)
-            #local_override_light("Blink_Med", light=myPlay.lights["top"][0])
             pass
 
         if myPlay.mode == "Final_Screen":
