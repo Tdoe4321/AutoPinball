@@ -20,9 +20,9 @@ class Playfield:
                 "bot" : deque([Light(), Light(), Light(), Light()])
                 }, 
                 switches = {
-                "top" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch]), 
-                "mid" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch]), 
-                "bot" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch])
+                "top" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch()]), 
+                "mid" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch()]), 
+                "bot" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch()])
                 },
                 coils = deque([Light(), Light(), Light(), Light(), Light()]),
                 score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None,
@@ -30,14 +30,6 @@ class Playfield:
         """ Class that will hold all the componenets in our playfield """
         self.switches = switches
         self.lights = lights
-
-        for light in self.lights["bot"]:
-            light.override_light = "Hold"
-
-        # Slingshot debounce time
-        self.switches["bot"][2].debounce_time = 0.25
-        self.switches["bot"][3].debounce_time = 0.25
-
         self.coils = coils
         self.bonus = bonus
         self.score = score
@@ -48,6 +40,18 @@ class Playfield:
         self.load_high_scores()
         self.left_flipper = left_flipper
         self.right_flipper = right_flipper
+
+        # All bottom lights should be "Hold" lights
+        for light in self.lights["bot"]:
+            light.override_light = "Hold"
+
+        # Slingshot debounce time
+        self.switches["bot"][2].debounce_time = 0.25
+        self.switches["bot"][3].debounce_time = 0.25
+
+        # Set coil activation time
+        for coil in self.coils:
+            coil.general_light_on_time = 0.1
         
     def reset(self):
         self.lights = {
@@ -70,6 +74,10 @@ class Playfield:
         # So I'm increasing their debounce time
         self.switches["bot"][2].debounce_time = 0.25
         self.switches["bot"][3].debounce_time = 0.25
+
+        # Set coil activation time
+        for coil in self.coils:
+            coil.general_light_on_time = 0.1
 
         # Score calculations
         self.score = 0

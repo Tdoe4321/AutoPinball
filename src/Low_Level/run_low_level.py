@@ -191,7 +191,10 @@ def update_score(score_to_add):
 
 # Published out new bonus value
 def update_bonus(bonus_to_add):
-    myPlay.bonus += (bonus_to_add * myPlay.bonus_modifier)
+    if(bonus_to_add > 0):
+        myPlay.bonus += (bonus_to_add * myPlay.bonus_modifier)
+    else:
+        myPlay.bonus = 0
     update_bonus_pub.publish(myPlay.bonus)
 
 # Based on ROS srv of row and column, return the information inside the light
@@ -664,7 +667,7 @@ if __name__ == "__main__":
     '''
     change_mode("Idle")
 
-    checking_highscore = False
+    checking_highscore = True
 
     # Keep the scheduler in a loop
     while not rospy.is_shutdown():
@@ -675,34 +678,35 @@ if __name__ == "__main__":
             for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
                 for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
                     i += 1
-                    if i % 2 == 0 and curr_light.pin != -1:
+                    if i % 2 == 0 and curr_light.pin != 99:
                         local_override_light("Blink_Slow", light=curr_light)
             i = 1
             time.sleep(1)
             for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
                 for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
                     i += 1
-                    if i % 2 == 1 and curr_light.pin != -1:
+                    if i % 2 == 1 and curr_light.pin != 99:
                         local_override_light("Blink_Slow", light=curr_light)
+            
             print("Done Setting up")
-            #local_override_light("Blink_Med", light=myPlay.lights["top"][0])
             change_mode("Idle_Waiting")
+
+            # DEBUG
             reset_all_components()
-            myPlay.setup_pins()
             change_mode("Normal_Play")
+            # END DEBUG
             
         if myPlay.mode == "Normal_Play":
             pass
 
         if myPlay.mode == "Final_Screen":
+            update_score(myPlay.bonus)
+            update_bonus(-1)
             print("Congradulations! Your score is: " + str(myPlay.score))
             if(checking_highscore):
                 user_name = raw_input("Please enter your name and we will tell you if you scored a high score\n")
                 myPlay.check_high_score(user_name, myPlay.score)
             reset_all_components()
             change_mode("Idle")
-
-        #if myPlay.mode == "High_Score":
-
 
         rate.sleep()
