@@ -163,12 +163,12 @@ int main(int argc, char** argv){
     ros::Publisher publish_flipper = nh.advertise<AutoPinball::flip_flipper>("internal_flip_flipper", 10);
 
 
-    int camera_num = 2;
+    std::string camera_string = "/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_6D6BFE5E-video-index0";
 
     // Camera object
-    cv::VideoCapture camera(camera_num);
+    cv::VideoCapture camera(camera_string);
 
-    if(!camera.open(camera_num)){
+    if(!camera.open(camera_string)){
         std::cout << "Camera did not open properly" << std::endl;
         return 0;
     }
