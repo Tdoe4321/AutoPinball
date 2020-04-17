@@ -42,7 +42,7 @@ def draw_line(img, pts):
 		cv2.line(img, pts[i - 1], pts[i], (0, 0, 180), thickness)
         
 # Camera Object
-camera = cv2.VideoCapture(0)
+camera = cv2.VideoCapture(2)
 
 # Convolution filter
 kernel = np.matrix('-1 -1 -1; -1 10 -1; -1 -1 -1')

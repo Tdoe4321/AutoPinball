@@ -23,11 +23,25 @@ from AutoPinball.srv import get_switch, get_switchResponse
 from AutoPinball.msg import override_light
 from AutoPinball.msg import flip_flipper
 
-# Time and scheduling
+# Time
 import time
 
 # Capture ctl + c
 import signal
+
+# Explicitly checks the bottom row of the playfield for all the lights being on
+def check_bottom_row():
+    # If a single one is not on, then leave
+    for single_light in myPlay.lights["bot"]:
+        if not single_light.on:
+            return
+
+    # If we've made it here, that means that all of them are on
+    myPlay.bonus_modifier += 1
+    update_score(10000)
+
+    for single_light in myPlay.lights["bot"]:
+        turn_off(single_light)
 
 # Method to check for switch debouncing
 def is_separate_trigger(switch):
@@ -35,6 +49,34 @@ def is_separate_trigger(switch):
         return True
     else:
         return False
+
+# Shift a group of lights to the left, given the left-most light
+# and the (inclusive) number of lights to shift
+def shift_left(row, left_index, num_of_lights):
+    temp_light_status = myPlay.lights[row][left_index].on
+    for i in range(left_index, left_index + num_of_lights - 1):
+        if(myPlay.lights[row][i + 1].on):
+            turn_on(myPlay.lights[row][i])
+        else:
+            turn_off(myPlay.lights[row][i])
+    
+    if(temp_light_status):
+        turn_on(myPlay.lights[row][left_index+num_of_lights - 1])
+    else:
+        turn_off(myPlay.lights[row][left_index+num_of_lights - 1])
+
+def shift_right(row, right_index, num_of_lights):
+    temp_light_status = myPlay.lights[row][right_index].on
+    for i in range(right_index, right_index - num_of_lights + 1, -1):
+        if(myPlay.lights[row][i - 1].on):
+            turn_on(myPlay.lights[row][i])
+        else:
+            turn_off(myPlay.lights[row][i])
+    
+    if(temp_light_status):
+        turn_on(myPlay.lights[row][right_index-num_of_lights + 1])
+    else:
+        turn_off(myPlay.lights[row][right_index-num_of_lights + 1])
 
 # Method to handle all the changeing of mode
 def change_mode(new_mode):
@@ -82,14 +124,14 @@ def flip_flipper_callback(flipper_msg):
     elif flipper_msg.flipper == -2:
         flipper_off(myPlay.right_flipper)
 
-# Schedule a time to turn a light on
+# Schedule a time to turn a light (or a coil) on
 def schedule_on(light, time_until):
     try:
         schedule.add_job(turn_on, 'date', run_date=calc_date(time_until, light), args=[light], id=str(light.pin) + "ON")
     except:
         print("Tried to schedule on, job with same name, no can do!")
 
-# Schedule a time to turn a light off
+# Schedule a time to turn a light (or a coil) off
 def schedule_off(light, time_until):
     try:
         schedule.add_job(turn_off, 'date', run_date=calc_date(time_until, light), args=[light], id=str(light.pin) + "OFF") 
@@ -117,7 +159,11 @@ def reset_all_components():
     # Turn off all lights
     for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
         for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-            light_off_pub.publish(curr_light.pin)
+            pin_off_pub.publish(curr_light.pin)
+
+    # Turn off all coils
+    for coil in myPlay.coils:
+        pin_off_pub.publish(coil.pin)
 
     # New playfield reference
     myPlay.reset()
@@ -202,8 +248,10 @@ def local_override_light(override, light):
 def turn_on(light):
     light.on = True
     light.last_time_on = rospy.get_rostime().to_sec()
-    light_on_pub.publish(light.pin)
-    if light.override_light == "Blink_Slow":
+    pin_on_pub.publish(light.pin)
+    if light.override_light == "Hold":
+        pass
+    elif light.override_light == "Blink_Slow":
         schedule_off(light, 1)
         light.curr_number_blink += 1
     elif light.override_light == "Blink_Med":
@@ -217,10 +265,10 @@ def turn_on(light):
 
     #print("on")
 
-# Turns off a light. If it is supposed to be blinking, it tieels it to turn on
+# Turns off a light. If it is supposed to be blinking, it tells it to turn on
 def turn_off(light):
     light.on = False
-    light_off_pub.publish(light.pin)
+    pin_off_pub.publish(light.pin)
     if light.override_light == "Blink_Slow":
         schedule_on(light, 1)
     elif light.override_light == "Blink_Med":
@@ -231,7 +279,6 @@ def turn_off(light):
     #print("off")
 
 # Callback for each switch on the playfield...
-#TODO: update scores for all switches - see switch_top_0 for placement and use
 ################  TOP ################
 def switch_top_0(data): # Left Orbit 
     switch = myPlay.switches["top"][0]
@@ -253,8 +300,10 @@ def switch_top_1(data): # Left Bumper
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
+    turn_on(myPlay.coils[0])
     new_switch_hit(switch.pin)
-    update_score(100)
+    print("left")
+    update_score(1)
     switch.last_time_on = rospy.get_rostime().to_sec()
 
 def switch_top_2(data): # Middle Bumper
@@ -265,8 +314,10 @@ def switch_top_2(data): # Middle Bumper
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
+    turn_on(myPlay.coils[1])
     new_switch_hit(switch.pin)
-    update_score(100)
+    print("mid")
+    update_score(10)
     switch.last_time_on = rospy.get_rostime().to_sec()
 
 def switch_top_3(data): # Right Bumper
@@ -277,7 +328,9 @@ def switch_top_3(data): # Right Bumper
     if light.override_light == "None":
         turn_on(light)
     switch.num_times_triggered += 1
+    turn_on(myPlay.coils[2])
     new_switch_hit(switch.pin)
+    print("right")
     update_score(100)
     switch.last_time_on = rospy.get_rostime().to_sec()
 
@@ -381,10 +434,11 @@ def switch_bot_0(data): # Left Outlane
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["bot"][0]
-    if light.override_light == "None":
+    if light.override_light == "None" or light.override_light == "Hold":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    check_bottom_row()
     update_score(5000)
     switch.last_time_on = rospy.get_rostime().to_sec()
 
@@ -393,10 +447,11 @@ def switch_bot_1(data): # Left Inlane
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["bot"][1]
-    if light.override_light == "None":
+    if light.override_light == "None" or light.override_light == "Hold":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    check_bottom_row()
     update_score(500)
     switch.last_time_on = rospy.get_rostime().to_sec()
 
@@ -405,8 +460,10 @@ def switch_bot_2(data): # Left Slingshot
     if not is_separate_trigger(switch):
         return
     switch.num_times_triggered += 1
+    turn_on(myPlay.coils[3])
     new_switch_hit(switch.pin)
-    update_score(100)
+    update_score(99)
+    print("l Sling")
     switch.last_time_on = rospy.get_rostime().to_sec()
 
 def switch_bot_3(data): # Right Slingshot
@@ -414,8 +471,10 @@ def switch_bot_3(data): # Right Slingshot
     if not is_separate_trigger(switch):
         return
     switch.num_times_triggered += 1
+    turn_on(myPlay.coils[4])
     new_switch_hit(switch.pin)
     update_score(100)
+    print("R Sling")
     switch.last_time_on = rospy.get_rostime().to_sec()
 
 def switch_bot_4(data): # Right Inlane
@@ -423,10 +482,11 @@ def switch_bot_4(data): # Right Inlane
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["bot"][2]
-    if light.override_light == "None":
+    if light.override_light == "None" or light.override_light == "Hold":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    check_bottom_row()
     update_score(500)
     switch.last_time_on = rospy.get_rostime().to_sec()
 
@@ -435,10 +495,11 @@ def switch_bot_5(data): # Right Outlane
     if not is_separate_trigger(switch):
         return
     light = myPlay.lights["bot"][3]
-    if light.override_light == "None":
+    if light.override_light == "None" or light.override_light == "Hold":
         turn_on(light)
     switch.num_times_triggered += 1
     new_switch_hit(switch.pin)
+    check_bottom_row()
     update_score(5000)
     switch.last_time_on = rospy.get_rostime().to_sec()
 
@@ -448,7 +509,7 @@ def switch_bot_6(data): # Left Flipper
         return
     switch.num_times_triggered += 1
     switch.last_time_on = rospy.get_rostime().to_sec()
-    #TODO: Add stuff about shift operator
+    shift_left("bot", 0, 4)
 
 def switch_bot_7(data): # Right Flipper
     switch = myPlay.switches["bot"][7]
@@ -456,9 +517,9 @@ def switch_bot_7(data): # Right Flipper
         return
     switch.num_times_triggered += 1
     switch.last_time_on = rospy.get_rostime().to_sec()
-    #TODO: Add stuff about shift operator
+    shift_right("bot", 3, 4)
 
-def switch_bot_8(data):
+def switch_bot_8(data): # Drain
     switch = myPlay.switches["bot"][8]
     if not is_separate_trigger(switch):
         return
@@ -478,12 +539,21 @@ def switch_start_button(data):
 # Capture ros shutdown
 def signal_handler():
         print('\nExiting...')
-        schedule.shutdown()
 
         # Turn off all lights
         for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
             for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-                light_off_pub.publish(curr_light.pin)
+                pin_off_pub.publish(curr_light.pin)
+
+        # Turn off flippers
+        flipper_off(myPlay.left_flipper)
+        flipper_off(myPlay.right_flipper)  
+        
+        # Turn off all coils
+        for coil in myPlay.coils:
+            pin_off_pub.publish(coil.pin)
+        
+        schedule.shutdown()
 
 # The status of the playfield, lights, switches, score, etc
 myPlay = Playfield()
@@ -531,8 +601,8 @@ switch_bot_8_sub = rospy.Subscriber("switch_bot_8_triggered", Bool, switch_bot_8
 switch_start_button_sub = rospy.Subscriber("switch_start_button_triggered", Bool, switch_start_button)
 
 # ROS publishers to turn on or off lights
-light_on_pub = rospy.Publisher('light_on', Int32, queue_size=10)
-light_off_pub = rospy.Publisher('light_off', Int32, queue_size=10)
+pin_on_pub = rospy.Publisher('pin_on', Int32, queue_size=10)
+pin_off_pub = rospy.Publisher('pin_off', Int32, queue_size=10)
 
 # ROS publisher to update score
 update_score_pub = rospy.Publisher('update_score', Int32, queue_size=10)
@@ -560,7 +630,15 @@ if __name__ == "__main__":
     # Make sure everything is off at startup
     for row in myPlay.lights: # for every row in the playfield (top, mid, bot)...
         for curr_light in myPlay.lights[row]: # ...and for every element 'i' in that row...
-            light_off_pub.publish(curr_light.pin)
+            pin_off_pub.publish(curr_light.pin)
+
+    # Turn off flippers
+    flipper_off(myPlay.left_flipper)
+    flipper_off(myPlay.right_flipper)  
+        
+    # Turn off all coils
+    for coil in myPlay.coils:
+        pin_off_pub.publish(coil.pin)
 
     '''
     while not rospy.is_shutdown():
@@ -612,7 +690,7 @@ if __name__ == "__main__":
             reset_all_components()
             myPlay.setup_pins()
             change_mode("Normal_Play")
-
+            
         if myPlay.mode == "Normal_Play":
             #print("Left: " + str(myPlay.left_flipper.on))
             #print("Right: " + str(myPlay.right_flipper.on))

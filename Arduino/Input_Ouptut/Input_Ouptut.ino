@@ -1,6 +1,6 @@
 /*
  * Author: Tyler Gragg
- * Date First Created: 01/18/2019
+ * Date First Created: 01/18/2020
  * Project: AutoPinball
  */
 
@@ -9,61 +9,68 @@
 #include <std_msgs/Bool.h>
 
 // Flipper Outputs
-#define LeftFlipper 99
-#define RightFlipper 99
+#define LeftFlipper 20
+#define RightFlipper 21
 
 // Switch Input - Start button
 #define StartButton 99 
 
 // Switch Inputs - Playfield
 // TOP
-#define TopSwitch0 99 // Rollover
-#define TopSwitch1 99 // Bumper
-#define TopSwitch2 99 // Bumper
-#define TopSwitch3 99 // Bumper
-#define TopSwitch4 99 // Rollover
-#define TopSwitch5 99 // Spinner
+#define TopSwitch0 8  // Rollover
+#define TopSwitch1 49 // Bumper
+#define TopSwitch2 50 // Bumper
+#define TopSwitch3 51 // Bumper
+#define TopSwitch4 5  // Rollover
+#define TopSwitch5 15 // Spinner
 
 // MID
-#define MidSwitch0 99 // Rollover
-#define MidSwitch1 99 // Standup
-#define MidSwitch2 99 // Rollover
-#define MidSwitch3 99 // Standup
-#define MidSwitch4 99 // Rollover
-#define MidSwitch5 99 // Rollover
+#define MidSwitch0 9  // Rollover
+#define MidSwitch1 13 // Standup
+#define MidSwitch2 7  // Rollover
+#define MidSwitch3 14 // Standup
+#define MidSwitch4 6  // Rollover
+#define MidSwitch5 4  // Rollover
 
 //BOT
-#define BotSwitch0 99 // Rollover
-#define BotSwitch1 99 // Rollover
-#define BotSwitch2 99 // Slingshot
-#define BotSwitch3 99 // Slingshot
-#define BotSwitch4 99 // Rollover
-#define BotSwitch5 99 // Rollover
-#define BotSwitch6 99 // Flipper
-#define BotSwitch7 99 // Flipper
-#define BotSwitch8 99 // Rollover
+#define BotSwitch0 10 // Rollover
+#define BotSwitch1 11 // Rollover
+#define BotSwitch2 53 // Slingshot
+#define BotSwitch3 52 // Slingshot
+#define BotSwitch4 3  // Rollover
+#define BotSwitch5 2  // Rollover
+#define BotSwitch6 18 // Flipper
+#define BotSwitch7 19 // Flipper
+#define BotSwitch8 12 // Rollover
 
 // Light Outputs
 // TOP
-#define TopLight0 99
-#define TopLight1 99
-#define TopLight2 99
+#define TopLight0 36
+#define TopLight1 35
+#define TopLight2 34
 
 // MID
-#define MidLight0 99
-#define MidLight1 99
-#define MidLight2 99
-#define MidLight3 99
-#define MidLight4 99
-#define MidLight5 99
-#define MidLight6 99
-#define MidLight7 99
+#define MidLight0 31
+#define MidLight1 32
+#define MidLight2 27
+#define MidLight3 28
+#define MidLight4 29
+#define MidLight5 26
+#define MidLight6 25
+#define MidLight7 24
 
 // BOT
-#define BotLight0 99
-#define BotLight1 99
-#define BotLight2 99
-#define BotLight3 99
+#define BotLight0 33
+#define BotLight1 30
+#define BotLight2 23
+#define BotLight3 22
+
+// Coils
+#define Coil0 44
+#define Coil1 45
+#define Coil2 46
+#define Coil3 47
+#define Coil4 48
 
 // Last states
 // TOP
@@ -148,20 +155,20 @@ void flip_callback(const std_msgs::Int32& flipper){
 }
 
 // Turn on whatever int comes in
-void light_on_callback(const std_msgs::Int32& light){
-  digitalWrite(light.data, HIGH);
+void pin_on_callback(const std_msgs::Int32& pin){
+  digitalWrite(pin.data, HIGH);
 }
 
 // Turn off whatever int comes in
-void light_off_callback(const std_msgs::Int32& light){
-  digitalWrite(light.data, LOW);
+void pin_off_callback(const std_msgs::Int32& pin){
+  digitalWrite(pin.data, LOW);
 }
 
 
 // ROS Subscibed messages
 ros::Subscriber<std_msgs::Int32> flip_sub("flip_flipper", &flip_callback);
-ros::Subscriber<std_msgs::Int32> light_on_sub("light_on", &light_on_callback);
-ros::Subscriber<std_msgs::Int32> light_off_sub("light_off", &light_off_callback);
+ros::Subscriber<std_msgs::Int32> pin_on_sub("pin_on", &pin_on_callback);
+ros::Subscriber<std_msgs::Int32> pin_off_sub("pin_off", &pin_off_callback);
 
 // Check all switches, then publish if they are triggered
 void checkSwitches(){
@@ -379,6 +386,13 @@ void setup(){
   pinMode(BotLight2, OUTPUT);
   pinMode(BotLight3, OUTPUT);
 
+  //Coils
+  pinMode(Coil0, OUTPUT);
+  pinMode(Coil1, OUTPUT);
+  pinMode(Coil2, OUTPUT);
+  pinMode(Coil3, OUTPUT);
+  pinMode(Coil4, OUTPUT);
+
   // Set everything low to start out
   digitalWrite(LeftFlipper, LOW);
   digitalWrite(RightFlipper, LOW);
@@ -397,6 +411,11 @@ void setup(){
   digitalWrite(BotLight1, LOW);
   digitalWrite(BotLight2, LOW);
   digitalWrite(BotLight3, LOW);
+  digitalWrite(Coil0, LOW);
+  digitalWrite(Coil1, LOW);
+  digitalWrite(Coil2, LOW);
+  digitalWrite(Coil3, LOW);
+  digitalWrite(Coil4, LOW);
   
   // Initialize ROS stuff
   nh.initNode();
@@ -433,8 +452,8 @@ void setup(){
   
   // Subscribers
   nh.subscribe(flip_sub);
-  nh.subscribe(light_on_sub);
-  nh.subscribe(light_off_sub);
+  nh.subscribe(pin_on_sub);
+  nh.subscribe(pin_off_sub);
 
   // Boolean empty message
   empty_msg.data = true;
