@@ -12,8 +12,6 @@
 #define LeftFlipper 20
 #define RightFlipper 21
 
-// Switch Input - Start button
-#define StartButton 99 
 
 // Switch Inputs - Playfield
 // TOP
@@ -71,6 +69,9 @@
 #define Coil2 46
 #define Coil3 47
 #define Coil4 48
+
+// Switch Input - Start button
+#define StartButton 42
 
 // Last states
 // TOP

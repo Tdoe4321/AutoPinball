@@ -24,13 +24,14 @@ class Playfield:
                 "mid" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch()]), 
                 "bot" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch()])
                 },
-                coils = deque([Light(), Light(), Light(), Light(), Light()]),
+                coils = deque([Light(), Light(), Light(), Light(), Light()]), start_button = Switch(),
                 score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None,
                 left_flipper = Flipper(flipper_num=1), right_flipper = Flipper(flipper_num=2)): 
         """ Class that will hold all the componenets in our playfield """
         self.switches = switches
         self.lights = lights
         self.coils = coils
+        self.start_button = start_button
         self.bonus = bonus
         self.score = score
         self.switch_list = switch_list
@@ -66,6 +67,8 @@ class Playfield:
 
         self.coils = deque([Light(), Light(), Light(), Light(), Light()])
 
+        self.start_button = Switch()
+
         # All the bottom lights are "Hold lights"
         for light in self.lights["bot"]:
             light.override_light = "Hold"
@@ -85,7 +88,7 @@ class Playfield:
         self.bonus_modifier = 1
 
         # List of switches hit in order
-        self.switch_list = [-1, -1, -1, -1, -1]
+        self.switch_list = [-1, -1, -1, -1, -1, -1]
 
         # String of current mode
         self.mode = ""
@@ -115,7 +118,7 @@ class Playfield:
         self.switches["mid"][3].pin = 14
         self.switches["mid"][4].pin = 6
         self.switches["mid"][5].pin = 4
-        
+
         # Bot row
         self.switches["bot"][0].pin = 10
         self.switches["bot"][1].pin = 11
@@ -155,6 +158,9 @@ class Playfield:
         self.coils[2].pin = 46
         self.coils[3].pin = 47
         self.coils[4].pin = 48
+
+        # Start button
+        self.start_button.pin = 42
 
     def load_high_scores(self):
         try:
