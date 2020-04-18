@@ -89,7 +89,7 @@ std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question){
 // Updates the left and right flipper polygons
 bool reset_flippers(cv::Mat raw, std::vector<std::vector<cv::Point>> &left_flip, std::vector<std::vector<cv::Point>> &right_flip, std::vector<cv::RotatedRect> &flipper_rects,
                     int circle_polygon_sides = 25, int circle_radius = 115,
-                    int tune_circle_trim_horizontal = 40, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 40, int tune_circle_shift_vertical = 0){
+                    int tune_circle_trim_horizontal = 70, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 30, int tune_circle_shift_vertical = 0){
     flipper_rects = find_flippers(raw);
     // If we did only find 2 flippers...
     if (flipper_rects.size() == 2){
