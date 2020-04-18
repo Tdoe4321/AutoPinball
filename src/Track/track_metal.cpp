@@ -55,8 +55,8 @@ std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question){
         cv::GaussianBlur(frame_in_question, mask, cv::Size(15,15), 0);
         cv::cvtColor(mask, mask, cv::COLOR_BGR2HSV);
 
-        cv::inRange(mask, cv::Scalar(20,120,59), cv::Scalar(40,220,190), mask);
-        cv::erode(mask, mask, NULL, cv::Point(-1,-1), 3);
+        cv::inRange(mask, cv::Scalar(15,150,100), cv::Scalar(45,250,220), mask);
+        //cv::erode(mask, mask, NULL, cv::Point(-1,-1), 3);
         cv::dilate(mask, mask, NULL, cv::Point(-1,-1), 3);
 
         cv::findContours(mask, cnts, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -88,7 +88,7 @@ std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question){
 
 // Updates the left and right flipper polygons
 bool reset_flippers(cv::Mat raw, std::vector<std::vector<cv::Point>> &left_flip, std::vector<std::vector<cv::Point>> &right_flip, std::vector<cv::RotatedRect> &flipper_rects,
-                    int circle_polygon_sides = 25, int circle_radius = 130,
+                    int circle_polygon_sides = 25, int circle_radius = 115,
                     int tune_circle_trim_horizontal = 40, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 40, int tune_circle_shift_vertical = 0){
     flipper_rects = find_flippers(raw);
     // If we did only find 2 flippers...
@@ -181,9 +181,11 @@ int main(int argc, char** argv){
     cv::Mat raw_display;
 
     //get the first frame setup
-    camera >> first_frame;
-    sleep(1);
-    camera >> first_frame;
+    // There's a "delay" loop here to give everything time to start up
+    for(int i = 0; i < 50; i++){
+        camera >> first_frame;
+    }
+
     cv::cvtColor(first_frame, first_frame, CV_BGR2GRAY);
 
     // Contour map
@@ -194,8 +196,8 @@ int main(int argc, char** argv){
     int ball_y = -1;
 
     // Threshholds for the size of the ball
-    int THRESH_MAX = 1700;
-    int THRESH_MIN = 1100;
+    int THRESH_MAX = 1500;
+    int THRESH_MIN = 700;
 
     // Rectangle Contour
     std::vector<std::vector<cv::Point> > left_flip{{cv::Point(218,369), cv::Point(301,428), cv::Point(299,397), cv::Point(293,368), cv::Point(284,339), cv::Point(262,326), cv::Point(241,333), cv::Point(228,346)}};
@@ -208,7 +210,7 @@ int main(int argc, char** argv){
     double right_last_flip_time = ros::Time::now().toSec();
     
     // Setup flipping messages
-    float flip_delta = 0.2;
+    float flip_delta = 0.35;
     AutoPinball::flip_flipper left_message;
     AutoPinball::flip_flipper right_message;
     left_message.time = flip_delta;
@@ -258,9 +260,9 @@ int main(int argc, char** argv){
             for(int i=0; i < my_contour.size(); i++){
                 // Find its area
                 double area = cv::contourArea(my_contour[i]);
-                
                 // If that area is between our thresholds...
                 if(area < THRESH_MAX && area > THRESH_MIN){
+                    //std::cout<< area << std::endl;
                     //Create a bounding rectangle around the current contour
                     cv::Rect pinball_rect = cv::Rect(cv::boundingRect(my_contour[i]));
                     ball_center.x = pinball_rect.x + pinball_rect.width/2;
@@ -301,10 +303,10 @@ int main(int argc, char** argv){
         cv::drawContours(raw_display, right_flip, -1, cv::Scalar(255,255,0), 3);
 
         // Tell the flippers we are no longer flipping after a certain time
-        if ((double)ros::Time::now().toSec() - left_last_flip_time > 2*flip_delta){
+        if ((double)ros::Time::now().toSec() - left_last_flip_time > flip_delta + flip_delta*0.5){
             left_flipping = false;
         }
-        if ((double)ros::Time::now().toSec() - right_last_flip_time > 2*flip_delta){
+        if ((double)ros::Time::now().toSec() - right_last_flip_time > flip_delta + flip_delta*0.5){
             right_flipping = false;
         }
 
