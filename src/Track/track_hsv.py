@@ -6,8 +6,8 @@ import cv2
 import time
 
 # define the lower and upper boundaries
-hsvLower = (20, 120, 50)
-hsvUpper = (40, 220, 190)
+hsvLower = (15, 150, 100)
+hsvUpper = (45, 250, 220)
 
 camera = cv2.VideoCapture(0)
 

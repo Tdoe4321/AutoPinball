@@ -17,6 +17,7 @@ def pick_color(event,x,y,flags,param):
         print(pixel, lower, upper)
 
         image_mask = cv2.inRange(image_hsv,lower,upper)
+        image_mask = cv2.dilate(image_mask, None, iterations=3)
         cv2.imshow("mask",image_mask)
 
 def main():
