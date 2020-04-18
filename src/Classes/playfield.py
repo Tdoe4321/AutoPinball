@@ -26,7 +26,8 @@ class Playfield:
                 },
                 coils = deque([Light(), Light(), Light(), Light(), Light()]), start_button = Switch(),
                 score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None,
-                left_flipper = Flipper(flipper_num=1), right_flipper = Flipper(flipper_num=2)): 
+                left_flipper = Flipper(flipper_num=1), right_flipper = Flipper(flipper_num=2),
+                multiball_counter = 0): 
         """ Class that will hold all the componenets in our playfield """
         self.switches = switches
         self.lights = lights
@@ -41,6 +42,7 @@ class Playfield:
         self.load_high_scores()
         self.left_flipper = left_flipper
         self.right_flipper = right_flipper
+        self.multiball_counter = multiball_counter
 
         # All bottom lights should be "Hold" lights
         for light in self.lights["bot"]:
@@ -88,6 +90,7 @@ class Playfield:
         self.bonus_modifier = 1
 
         # List of switches hit in order
+        # This works as: [oldest --> Newest]
         self.switch_list = [-1, -1, -1, -1, -1, -1]
 
         # String of current mode
@@ -100,6 +103,9 @@ class Playfield:
         # Flippers
         self.left_flipper = Flipper(flipper_num=1)
         self.right_flipper = Flipper(flipper_num=2)
+
+        # Multiball
+        self.multiball_counter = 0
         
     def setup_pins(self):
         # Setup all the pins for the switches on the playfield
