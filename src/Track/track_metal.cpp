@@ -1,6 +1,7 @@
 #include "opencv2/opencv.hpp"
 
 #include "ros/ros.h"
+#include "std_msgs/Bool.h"
 #include "AutoPinball/flip_flipper.h"
 
 #include <iostream>
@@ -88,8 +89,8 @@ std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question){
 
 // Updates the left and right flipper polygons
 bool reset_flippers(cv::Mat raw, std::vector<std::vector<cv::Point>> &left_flip, std::vector<std::vector<cv::Point>> &right_flip, std::vector<cv::RotatedRect> &flipper_rects,
-                    int circle_polygon_sides = 25, int circle_radius = 115,
-                    int tune_circle_trim_horizontal = 70, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 30, int tune_circle_shift_vertical = 0){
+                    int circle_polygon_sides = 25, int circle_radius = 130,
+                    int tune_circle_trim_horizontal = 60, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 20, int tune_circle_shift_vertical = 0){
     flipper_rects = find_flippers(raw);
     // If we did only find 2 flippers...
     if (flipper_rects.size() == 2){
@@ -156,12 +157,33 @@ std::vector<std::vector<cv::Point> > calculate_thresh(cv::Mat first_frame, cv::M
     return cnts;    
 }
 
+// Wrapper tha holds all of our ROS bindings
+// This is so we can modify 'local' member variables without using boost binds
+class ROS_Wrapper {
+  public:
+    ROS_Wrapper(int argc, char** argv){
+        autonomy_enabled = true;
+
+        ros::init(argc, argv, "Tracking_Ball");
+
+        ros::NodeHandle nh;
+        publish_flipper = nh.advertise<AutoPinball::flip_flipper>("internal_flip_flipper", 10);
+        switch_autonomy_sub = nh.subscribe("switch_autonomy_switch_triggered", 100, &ROS_Wrapper::autonomy_switch_callback, this);
+    }
+
+    void autonomy_switch_callback(const std_msgs::Bool::ConstPtr& msg){
+        this->autonomy_enabled = msg->data;
+    }
+
+    bool autonomy_enabled;
+
+    ros::Publisher publish_flipper;
+    ros::Subscriber switch_autonomy_sub;
+};
+
 int main(int argc, char** argv){
     // Initialize ROS
-    ros::init(argc, argv, "Tracking_Ball");
-    ros::NodeHandle nh;
-    ros::Publisher publish_flipper = nh.advertise<AutoPinball::flip_flipper>("internal_flip_flipper", 10);
-
+    ROS_Wrapper ros_wrap(argc, argv);
 
     std::string camera_string = "/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_6D6BFE5E-video-index0";
 
@@ -272,16 +294,16 @@ int main(int argc, char** argv){
                     cv::circle(raw_display, ball_center, 20, cv::Scalar(0,0,0), 5);
 
                     // Test if the ball is inside the "flip zones" AND we are currently not flipping
-                    if(cv::pointPolygonTest(left_flip[0], ball_center, false) >= 0 && !left_flipping){
+                    if(cv::pointPolygonTest(left_flip[0], ball_center, false) >= 0 && !left_flipping && ros_wrap.autonomy_enabled){
                         left_flipping = true;
                         left_last_flip_time = ros::Time::now().toSec();
-                        publish_flipper.publish(left_message);
+                        ros_wrap.publish_flipper.publish(left_message);
                         std::cout << "LEFT!" << std::endl;
                     }
-                    if(cv::pointPolygonTest(right_flip[0], ball_center, false) >= 0 && !right_flipping){
+                    if(cv::pointPolygonTest(right_flip[0], ball_center, false) >= 0 && !right_flipping && ros_wrap.autonomy_enabled){
                         right_flipping = true;
                         right_last_flip_time = ros::Time::now().toSec();
-                        publish_flipper.publish(right_message);
+                        ros_wrap.publish_flipper.publish(right_message);
                         std::cout << "RIGHT!" << std::endl;
                     }
                 }
