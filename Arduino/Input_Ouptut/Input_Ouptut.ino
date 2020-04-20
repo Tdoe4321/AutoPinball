@@ -7,6 +7,7 @@
 #include <ros.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Bool.h>
+#include <Servo.h>
 
 // Flipper Outputs
 #define LeftFlipper 20
@@ -70,8 +71,13 @@
 #define Coil3 47
 #define Coil4 48
 
-// Switch Input - Start button
+// Start button & Autonomy Switch
 #define StartButton 42
+#define AutonomySwitch 43
+
+// Servo for the multiball
+#define ServoPin 1
+Servo multiball; 
 
 // Last states
 // TOP
@@ -102,6 +108,7 @@ uint8_t BotSwitch7Last = 0;
 uint8_t BotSwitch8Last = 0;
 
 uint8_t StartButtonLast = 0;
+uint8_t AutonomySwitchLast = 0;
 
 // ROS Node Handle
 ros::NodeHandle nh;
@@ -137,8 +144,8 @@ ros::Publisher switch_bot_7_pub("switch_bot_7_triggered", &empty_msg);
 ros::Publisher switch_bot_8_pub("switch_bot_8_triggered", &empty_msg);
 
 ros::Publisher start_button_pub("switch_start_button_triggered", &empty_msg);
+ros::Publisher autonomy_switch_pub("switch_autonomy_switch_triggered", &empty_msg);
 
-//TODO: Possibly add callback for each flipper - then I could change to bool
 void flip_callback(const std_msgs::Int32& flipper){
   // 1 = left_flipper ON, 2 = right_flipper ON, -1 = left_flipper OFF, -2 = right_flipper OFF
   if (flipper.data == 1){
@@ -165,11 +172,19 @@ void pin_off_callback(const std_msgs::Int32& pin){
   digitalWrite(pin.data, LOW);
 }
 
+// Write the servo to whatever comes in
+void servo_value_callback(const std_msgs::Int32& value){
+  for(int i = 0; i < 10; i++){
+    multiball.writeMicroseconds(value.data); 
+  }
+}
+
 
 // ROS Subscibed messages
 ros::Subscriber<std_msgs::Int32> flip_sub("flip_flipper", &flip_callback);
 ros::Subscriber<std_msgs::Int32> pin_on_sub("pin_on", &pin_on_callback);
 ros::Subscriber<std_msgs::Int32> pin_off_sub("pin_off", &pin_off_callback);
+ros::Subscriber<std_msgs::Int32> multiball_servo_sub("servo_value", &servo_value_callback);
 
 // Check all switches, then publish if they are triggered
 void checkSwitches(){
@@ -201,6 +216,7 @@ void checkSwitches(){
   uint8_t curBotSwitch8 = digitalRead(BotSwitch8);
 
   uint8_t curStartButton = digitalRead(StartButton);
+  uint8_t curAutonomySwitch = digitalRead(AutonomySwitch);
   
   // -----------  TOP  -----------
   if (!curTopSwitch0 && curTopSwitch0 != TopSwitch0Last){
@@ -297,6 +313,11 @@ void checkSwitches(){
     start_button_pub.publish(&empty_msg);
     nh.spinOnce();
   }
+  if (curAutonomySwitch!= AutonomySwitchLast){
+    empty_msg.data = curAutonomySwitch;
+    autonomy_switch_pub.publish(&empty_msg);
+    nh.spinOnce();
+  }
 
   //TOP
   TopSwitch0Last = curTopSwitch0;
@@ -327,6 +348,7 @@ void checkSwitches(){
 
   //OTHER
   StartButtonLast = curStartButton;
+  AutonomySwitchLast = curAutonomySwitch;
 }
 
 void setup(){
@@ -334,8 +356,9 @@ void setup(){
   pinMode(LeftFlipper, OUTPUT);
   pinMode(RightFlipper, OUTPUT);
   
-  // Start Button
+  // Start Button & Autonomy
   pinMode(StartButton, INPUT_PULLUP);
+  pinMode(AutonomySwitch, INPUT_PULLUP);
   
   // Switches
   //TOP
@@ -394,6 +417,9 @@ void setup(){
   pinMode(Coil3, OUTPUT);
   pinMode(Coil4, OUTPUT);
 
+  // Servo
+  multiball.attach(ServoPin);
+
   // Set everything low to start out
   digitalWrite(LeftFlipper, LOW);
   digitalWrite(RightFlipper, LOW);
@@ -417,6 +443,7 @@ void setup(){
   digitalWrite(Coil2, LOW);
   digitalWrite(Coil3, LOW);
   digitalWrite(Coil4, LOW);
+  multiball.writeMicroseconds(2500);
   
   // Initialize ROS stuff
   nh.initNode();
@@ -450,11 +477,13 @@ void setup(){
 
   //OTHER
   nh.advertise(start_button_pub);
+  nh.advertise(autonomy_switch_pub);
   
   // Subscribers
   nh.subscribe(flip_sub);
   nh.subscribe(pin_on_sub);
   nh.subscribe(pin_off_sub);
+  nh.subscribe(multiball_servo_sub);
 
   // Boolean empty message
   empty_msg.data = true;

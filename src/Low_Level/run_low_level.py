@@ -29,6 +29,9 @@ import time
 # Capture ctl + c
 import signal
 
+# Command line arguments
+import argparse
+
 def check_against_switch_list(specific_list):
     if len(specific_list) > len(myPlay.switch_list):
         print("The list you provided is too long!")
@@ -190,6 +193,9 @@ def reset_all_components():
     # Publish out that we have no points
     update_score(0)
     update_bonus(0)
+
+    # Reset servo
+    servo_pub.publish(2500) # The zero position
 
 # Keeps the last five commands stored here so we can change mode if you get a sertain combo:
 def new_switch_hit(pin):
@@ -477,6 +483,7 @@ def switch_bot_1(data): # Left Inlane
         if(myPlay.multiball_counter == 3):
             local_override_light("None", ramp_light)
             change_mode("Multiball_Madness")
+            servo_pub.publish(1500) # 1500 is the halfway point
             print("ENGAGE MULTIBALL")
     
     switch.num_times_triggered += 1
@@ -567,7 +574,19 @@ def switch_start_button(data):
         return
     print("Start Button Pressed!")
     reset_all_components()
+    local_override_light("Blink_Med", myPlay.lights["mid"][6])
     change_mode("Normal_Play")
+
+def switch_autonomy_switch(data):
+    if not is_separate_trigger(myPlay.autonomy_switch):
+        return
+    if(data.data):
+        print("Autonomy Mode Engaged!")
+        myPlay.autonomy_value = True
+        myPlay.checking_highscore = False
+    else:
+        print("Autonomy Mode Disengaged!")
+        myPlay.autonomy_value = False
 
 # Capture ros shutdown
 def signal_handler():
@@ -630,12 +649,16 @@ switch_bot_6_sub = rospy.Subscriber("switch_bot_6_triggered", Bool, switch_bot_6
 switch_bot_7_sub = rospy.Subscriber("switch_bot_7_triggered", Bool, switch_bot_7)
 switch_bot_8_sub = rospy.Subscriber("switch_bot_8_triggered", Bool, switch_bot_8)
 
-# ROS subscirber that checkes when the start button is pressed
+# ROS subscirber that checkes when the start button is pressed or autonomy switch
 switch_start_button_sub = rospy.Subscriber("switch_start_button_triggered", Bool, switch_start_button)
+switch_autonomy_switch_sub = rospy.Subscriber("switch_autonomy_switch_triggered", Bool, switch_autonomy_switch)
 
 # ROS publishers to turn on or off lights
 pin_on_pub = rospy.Publisher('pin_on', Int32, queue_size=10)
 pin_off_pub = rospy.Publisher('pin_off', Int32, queue_size=10)
+
+# ROS publisher to turn the servo
+servo_pub = rospy.Publisher('servo_value', Int32, queue_size=10)
 
 # ROS publisher to update score
 update_score_pub = rospy.Publisher('update_score', Int32, queue_size=10)
@@ -658,6 +681,15 @@ schedule = BackgroundScheduler()
 schedule.start()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Welcome to the backbone of Autonomous Pinball')
+    parser.add_argument('-m', '--manual', action='store_true', help='Runs the low level stuff with autonomy enabled')
+    args = parser.parse_args(rospy.myargv()[1:])
+
+    # Grab the argparse value for manual mode
+    # This is mostly updated through launch files
+    myPlay.autonomy_value = not args.manual
+
+    # Setup arduino pins
     myPlay.setup_pins()
 
     # Make sure everything is off at startup
@@ -673,11 +705,14 @@ if __name__ == "__main__":
     for coil in myPlay.coils:
         pin_off_pub.publish(coil.pin)
 
+    # Set the rate for ROS to run at
     rate = rospy.Rate(10)
 
+    # Set the starting mode
     change_mode("Idle")
 
-    checking_highscore = False
+    # Only enable this if we are running manual and super duper want this
+    myPlay.checking_highscore = False
 
     # Keep the scheduler in a loop
     while not rospy.is_shutdown():
@@ -701,22 +736,33 @@ if __name__ == "__main__":
             change_mode("Idle_Waiting")
 
             # DEBUG from no start button
-            reset_all_components()
-            change_mode("Normal_Play")
+            switch_start_button(True) # Helpful for moving us to normal play
             # END DEBUG
-            local_override_light("Blink_Med", myPlay.lights["mid"][6])
             
         if myPlay.mode == "Normal_Play":
+            #switch_bot_8(True) # Drain
             pass
 
         if myPlay.mode == "Final_Screen":
+            # Combine bonus into the score
             update_score(myPlay.bonus)
             update_bonus(-1)
+
+            # Output to user
             print("Congradulations! Your score is: " + str(myPlay.score))
-            if(checking_highscore):
-                user_name = raw_input("Please enter your name and we will tell you if you scored a high score\n")
-                myPlay.check_high_score(user_name, myPlay.score)
-            reset_all_components()
-            change_mode("Idle")
+            if not myPlay.autonomy_value: # Manual Mode
+                # If we are checking highscores, ask the user for their name
+                if(myPlay.checking_highscore):
+                    user_name = raw_input("Please enter your name and we will tell you if you scored a high score\n")
+                    myPlay.check_high_score(user_name, myPlay.score)
+                
+                # Setup new game, but still wait for start button
+                reset_all_components()
+                change_mode("Idle")
+            
+            else: # Autonomous Mode
+                print("Autonomous Mode, quickly resetting")
+                reset_all_components()
+                change_mode("Normal_Play")
 
         rate.sleep()

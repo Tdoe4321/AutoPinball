@@ -2,8 +2,8 @@
   <env name="ROSCONSOLE_FORMAT" value="[${severity}${node}]: [${time}] ${message}"/>
 
   <node name="Low_Level_Node" pkg="AutoPinball" type="run_low_level.py" required="true" output="screen" />
-  <node name="Track_Pinballs_Node" pkg="AutoPinball" type="track_metal" output="screen"/>
   <node name="GUI_Node" pkg="AutoPinball" type="gui.py" output="screen"/>
+  <node name="Track_Pinballs_Node" pkg="AutoPinball" type="track_metal" output="screen"/>
   
   <node name="Arduino_Node" pkg="rosserial_arduino" type="serial_node.py" args="/dev/ttyACM0" required="true" output="screen"/>
 

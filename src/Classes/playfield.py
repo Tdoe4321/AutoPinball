@@ -24,15 +24,16 @@ class Playfield:
                 "mid" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch()]), 
                 "bot" : deque([Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch(), Switch()])
                 },
-                coils = deque([Light(), Light(), Light(), Light(), Light()]), start_button = Switch(),
+                coils = deque([Light(), Light(), Light(), Light(), Light()]), start_button = Switch(), autonomy_switch = Switch(),
                 score = 0, bonus = 0, bonus_modifier = 1, switch_list = [-1, -1, -1, -1, -1], mode = "", high_scores = None,
                 left_flipper = Flipper(flipper_num=1), right_flipper = Flipper(flipper_num=2),
-                multiball_counter = 0): 
+                multiball_counter = 0, autonomy_value = True, checking_highscore = False): 
         """ Class that will hold all the componenets in our playfield """
         self.switches = switches
         self.lights = lights
         self.coils = coils
         self.start_button = start_button
+        self.autonomy_switch = autonomy_switch
         self.bonus = bonus
         self.score = score
         self.switch_list = switch_list
@@ -43,6 +44,8 @@ class Playfield:
         self.left_flipper = left_flipper
         self.right_flipper = right_flipper
         self.multiball_counter = multiball_counter
+        self.autonomy_value = autonomy_value
+        self.checking_highscore = checking_highscore
 
         # All bottom lights should be "Hold" lights
         for light in self.lights["bot"]:
@@ -70,6 +73,7 @@ class Playfield:
         self.coils = deque([Light(), Light(), Light(), Light(), Light()])
 
         self.start_button = Switch()
+        self.autonomy_switch = Switch()
 
         # All the bottom lights are "Hold lights"
         for light in self.lights["bot"]:
@@ -167,6 +171,7 @@ class Playfield:
 
         # Start button
         self.start_button.pin = 42
+        self.autonomy_switch.pin = 43
 
     def load_high_scores(self):
         try:
