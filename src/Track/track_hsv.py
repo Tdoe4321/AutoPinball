@@ -6,10 +6,10 @@ import cv2
 import time
 
 # define the lower and upper boundaries
-hsvLower = (15, 150, 100)
-hsvUpper = (45, 250, 220)
+hsvLower = (15, 200, 100)
+hsvUpper = (45, 270, 220)
 
-camera = cv2.VideoCapture(0)
+camera = cv2.VideoCapture(2)
 
 time.sleep(1.0)
 
@@ -22,7 +22,7 @@ while True:
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
     mask = cv2.inRange(hsv, hsvLower, hsvUpper)
-    mask = cv2.erode(mask, None, iterations=3)
+    #mask = cv2.erode(mask, None, iterations=3)
     mask = cv2.dilate(mask, None, iterations=3)
     
     cnts, hie = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

@@ -44,42 +44,59 @@ void draw_rotated_rectangle(cv::Mat& image, cv::RotatedRect rotatedRectangle){
     cv::fillConvexPoly(image, vertices, 4, color);
 }
 
-// Returns 2 contour, hopefully, both flippers
+// Returns 2 contours, hopefully, both flippers
 std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question){
     std::cout << "FIND FLIPPERS" << std::endl;
     
     std::vector<std::vector<cv::Point> > cnts;
-    int num_tries = 0;
 
-    while(cnts.size() != 2 && num_tries < 5){
-        cv::Mat mask;
-        cv::GaussianBlur(frame_in_question, mask, cv::Size(15,15), 0);
-        cv::cvtColor(mask, mask, cv::COLOR_BGR2HSV);
+    cv::Mat mask;
+    cv::GaussianBlur(frame_in_question, mask, cv::Size(15,15), 0);
+    cv::cvtColor(mask, mask, cv::COLOR_BGR2HSV);
 
-        cv::inRange(mask, cv::Scalar(15,150,100), cv::Scalar(45,250,220), mask);
-        //cv::erode(mask, mask, NULL, cv::Point(-1,-1), 3);
-        cv::dilate(mask, mask, NULL, cv::Point(-1,-1), 3);
+    cv::inRange(mask, cv::Scalar(15,200,100), cv::Scalar(45,270,220), mask);
+    cv::dilate(mask, mask, NULL, cv::Point(-1,-1), 3);
 
-        cv::findContours(mask, cnts, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-        std::cout << cnts.size() << std::endl;
-        num_tries++;
+    cv::findContours(mask, cnts, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    std::cout << cnts.size() << std::endl;
+
+    /// Get the moments
+    std::vector<cv::Moments> mu(cnts.size() );
+    for( int i = 0; i < cnts.size(); i++ ){ 
+        mu[i] = cv::moments( cnts[i], false ); 
     }
 
-    if(num_tries >= 5){
+    ///  Get the mass centers:
+    std::vector<cv::Point2f> mc( cnts.size() );
+    for( int i = 0; i < cnts.size(); i++ ){ 
+        mc[i] = cv::Point2f( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 ); 
+    }
+
+    int left_index, right_index = -1;
+    int distance_from_center = 100;
+
+    // Grab the right flipper and left flipper index
+    for( int i = 0; i < cnts.size(); i++ ){ 
+        if(abs(mc[i].x - frame_in_question.cols/2) < distance_from_center && mc[i].x > frame_in_question.cols / 2){
+            right_index = i;
+        }
+        if(abs(mc[i].x - frame_in_question.cols/2) < distance_from_center && mc[i].x < frame_in_question.cols / 2){
+            left_index = i;
+        }
+    }
+
+    // Couldn't find both flippers
+    if(left_index == -1 || right_index == -1){
         std::vector<cv::RotatedRect> empty;
-        std::cout << "EMPTY" << std::endl;
+        std::cout << "NO FLIPPERS" << std::endl;
         return empty;
     }
+    // Could find both flippers
     else{
-        std::cout << "NOT EMPTY" << std::endl;
+        std::cout << "FOUND FLIPPERS" << std::endl;
         std::vector<cv::RotatedRect> rect_list;
-        cv::RotatedRect left_rect = cv::minAreaRect(cnts[0]);
-        cv::RotatedRect right_rect = cv::minAreaRect(cnts[1]);
-
-        if(left_rect.center.x > right_rect.center.x){
-            left_rect = cv::minAreaRect(cnts[1]);
-            right_rect = cv::minAreaRect(cnts[0]);
-        }
+        cv::RotatedRect left_rect = cv::minAreaRect(cnts[left_index]);
+        cv::RotatedRect right_rect = cv::minAreaRect(cnts[right_index]);
 
         rect_list.push_back(left_rect);
         rect_list.push_back(right_rect);
@@ -89,8 +106,9 @@ std::vector<cv::RotatedRect> find_flippers(cv::Mat frame_in_question){
 
 // Updates the left and right flipper polygons
 bool reset_flippers(cv::Mat raw, std::vector<std::vector<cv::Point>> &left_flip, std::vector<std::vector<cv::Point>> &right_flip, std::vector<cv::RotatedRect> &flipper_rects,
-                    int circle_polygon_sides = 25, int circle_radius = 130,
-                    int tune_circle_trim_horizontal = 60, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 20, int tune_circle_shift_vertical = 0){
+                    int circle_polygon_sides = 25, int circle_radius = 110,
+                    int tune_circle_trim_horizontal = 60, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 30, int tune_circle_shift_vertical = 0){  //For normal play
+                    //int tune_circle_trim_horizontal = 85, int tune_circle_trim_vertical = 20, int tune_circle_shift_horizontal = 52, int tune_circle_shift_vertical = 10){  // For ramp
     flipper_rects = find_flippers(raw);
     // If we did only find 2 flippers...
     if (flipper_rects.size() == 2){
@@ -161,14 +179,11 @@ std::vector<std::vector<cv::Point> > calculate_thresh(cv::Mat first_frame, cv::M
 // This is so we can modify 'local' member variables without using boost binds
 class ROS_Wrapper {
   public:
-    ROS_Wrapper(int argc, char** argv){
+    ROS_Wrapper(ros::NodeHandle node){
         autonomy_enabled = true;
 
-        ros::init(argc, argv, "Tracking_Ball");
-
-        ros::NodeHandle nh;
-        publish_flipper = nh.advertise<AutoPinball::flip_flipper>("internal_flip_flipper", 10);
-        switch_autonomy_sub = nh.subscribe("switch_autonomy_switch_triggered", 100, &ROS_Wrapper::autonomy_switch_callback, this);
+        publish_flipper = node.advertise<AutoPinball::flip_flipper>("internal_flip_flipper", 10);
+        switch_autonomy_sub = node.subscribe("switch_autonomy_switch_triggered", 100, &ROS_Wrapper::autonomy_switch_callback, this);
     }
 
     void autonomy_switch_callback(const std_msgs::Bool::ConstPtr& msg){
@@ -183,7 +198,10 @@ class ROS_Wrapper {
 
 int main(int argc, char** argv){
     // Initialize ROS
-    ROS_Wrapper ros_wrap(argc, argv);
+    ros::init(argc, argv, "Tracking_Ball");
+    ros::NodeHandle nh;
+
+    ROS_Wrapper ros_wrap(nh);
 
     std::string camera_string = "/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_6D6BFE5E-video-index0";
 
@@ -254,7 +272,7 @@ int main(int argc, char** argv){
             time_of_last_flip_reset = ros::Time::now().toSec();
             break;
        }
-       sleep(1);
+       sleep(0.5);
     }
 
     while(ros::ok()){
@@ -350,6 +368,8 @@ int main(int argc, char** argv){
             camera.release();
             break;
         }  
+
+        ros::spinOnce();
     }
     
     return 0;

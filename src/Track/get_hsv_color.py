@@ -24,7 +24,7 @@ def main():
     import sys, time
     global image_hsv, pixel # so we can use it in mouse callback
 
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(2)
 
     camera.read()
 
