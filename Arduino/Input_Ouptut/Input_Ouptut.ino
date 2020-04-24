@@ -6,6 +6,7 @@
 
 #include <ros.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/UInt16.h>
 #include <std_msgs/Bool.h>
 #include <Servo.h>
 
@@ -76,7 +77,7 @@
 #define AutonomySwitch 43
 
 // Servo for the multiball
-#define ServoPin 1
+#define ServoPin A0
 Servo multiball; 
 
 // Last states
@@ -173,10 +174,8 @@ void pin_off_callback(const std_msgs::Int32& pin){
 }
 
 // Write the servo to whatever comes in
-void servo_value_callback(const std_msgs::Int32& value){
-  for(int i = 0; i < 10; i++){
-    multiball.writeMicroseconds(value.data); 
-  }
+void servo_value_callback(const std_msgs::UInt16& value){
+  multiball.writeMicroseconds(value.data); 
 }
 
 
@@ -184,7 +183,7 @@ void servo_value_callback(const std_msgs::Int32& value){
 ros::Subscriber<std_msgs::Int32> flip_sub("flip_flipper", &flip_callback);
 ros::Subscriber<std_msgs::Int32> pin_on_sub("pin_on", &pin_on_callback);
 ros::Subscriber<std_msgs::Int32> pin_off_sub("pin_off", &pin_off_callback);
-ros::Subscriber<std_msgs::Int32> multiball_servo_sub("servo_value", &servo_value_callback);
+ros::Subscriber<std_msgs::UInt16> multiball_servo_sub("servo_value", &servo_value_callback);
 
 // Check all switches, then publish if they are triggered
 void checkSwitches(){
@@ -314,7 +313,7 @@ void checkSwitches(){
     nh.spinOnce();
   }
   if (curAutonomySwitch!= AutonomySwitchLast){
-    empty_msg.data = curAutonomySwitch;
+    empty_msg.data = !curAutonomySwitch;
     autonomy_switch_pub.publish(&empty_msg);
     nh.spinOnce();
   }
@@ -443,7 +442,7 @@ void setup(){
   digitalWrite(Coil2, LOW);
   digitalWrite(Coil3, LOW);
   digitalWrite(Coil4, LOW);
-  multiball.writeMicroseconds(2500);
+  multiball.writeMicroseconds(2000);
   
   // Initialize ROS stuff
   nh.initNode();

@@ -15,6 +15,7 @@ from playfield import Playfield
 # Ros stuff
 import rospy
 from std_msgs.msg import Int32
+from std_msgs.msg import UInt16
 from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Bool
 from std_msgs.msg import String
@@ -480,10 +481,10 @@ def switch_bot_1(data): # Left Inlane
         turn_on(light)
     if (ramp_light.override_light == "Blink_Med" and check_against_switch_list(mylist)):
         myPlay.multiball_counter += 1
-        if(myPlay.multiball_counter == 3):
+        if(myPlay.multiball_counter == 1):
             local_override_light("None", ramp_light)
             change_mode("Multiball_Madness")
-            servo_pub.publish(1500) # 1500 is the halfway point
+            servo_pub.publish(1500) # The release position
             print("ENGAGE MULTIBALL")
     
     switch.num_times_triggered += 1
@@ -658,7 +659,7 @@ pin_on_pub = rospy.Publisher('pin_on', Int32, queue_size=10)
 pin_off_pub = rospy.Publisher('pin_off', Int32, queue_size=10)
 
 # ROS publisher to turn the servo
-servo_pub = rospy.Publisher('servo_value', Int32, queue_size=10)
+servo_pub = rospy.Publisher('servo_value', UInt16, queue_size=10)
 
 # ROS publisher to update score
 update_score_pub = rospy.Publisher('update_score', Int32, queue_size=10)
@@ -736,11 +737,10 @@ if __name__ == "__main__":
             change_mode("Idle_Waiting")
 
             # DEBUG from no start button
-            switch_start_button(True) # Helpful for moving us to normal play
+            #switch_start_button(True) # Helpful for moving us to normal play
             # END DEBUG
             
         if myPlay.mode == "Normal_Play":
-            #switch_bot_8(True) # Drain
             pass
 
         if myPlay.mode == "Final_Screen":
@@ -762,7 +762,6 @@ if __name__ == "__main__":
             
             else: # Autonomous Mode
                 print("Autonomous Mode, quickly resetting")
-                reset_all_components()
-                change_mode("Normal_Play")
+                switch_start_button(True)
 
         rate.sleep()
