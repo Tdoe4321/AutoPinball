@@ -105,7 +105,6 @@ def change_mode(new_mode):
 # Will use flipper.general_flipper_on_time if time_until_off is not set. 
 # Set it to 0 to hold
 def flipper_on(flipper, time_util_off=-1):
-    print("ON: " + str(flipper.flipper_num))
     if flipper.on:
         return
     flipper.on = True
@@ -126,7 +125,6 @@ def flipper_on(flipper, time_util_off=-1):
             print("Tried to schedule flipper off: " + str(flipper.flipper_num))
 
 def flipper_off(flipper):
-    print("OFF: " + str(flipper.flipper_num))
     if not flipper.on:
         return
     flipper.on = False
@@ -584,7 +582,6 @@ def switch_autonomy_switch(data):
     if(data.data):
         print("Autonomy Mode Engaged!")
         myPlay.autonomy_value = True
-        myPlay.checking_highscore = False
     else:
         print("Autonomy Mode Disengaged!")
         myPlay.autonomy_value = False
@@ -735,10 +732,6 @@ if __name__ == "__main__":
             
             print("Done Setting up")
             change_mode("Idle_Waiting")
-
-            # DEBUG from no start button
-            #switch_start_button(True) # Helpful for moving us to normal play
-            # END DEBUG
             
         if myPlay.mode == "Normal_Play":
             pass

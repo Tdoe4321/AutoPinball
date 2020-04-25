@@ -54,6 +54,7 @@ class Playfield:
         # Slingshot debounce time
         self.switches["bot"][2].debounce_time = 0.25
         self.switches["bot"][3].debounce_time = 0.25
+        self.switches["bot"][8].debounce_time = 1
 
         # Set coil activation time
         for coil in self.coils:
@@ -83,6 +84,7 @@ class Playfield:
         # So I'm increasing their debounce time
         self.switches["bot"][2].debounce_time = 0.25
         self.switches["bot"][3].debounce_time = 0.25
+        self.switches["bot"][8].debounce_time = 1
 
         # Set coil activation time
         for coil in self.coils:
