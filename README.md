@@ -5,7 +5,20 @@ Check out the video here:
 [![AutoPinball Video](http://img.youtube.com/vi/dy7oVSNtaRk/0.jpg)](https://www.youtube.com/watch?v=dy7oVSNtaRk "AutoPinball")
 
 ### Dependencies
- * TODO 
+This repo has the following dependencies that must be installed.
+ * [ROS](http://wiki.ros.org/melodic/Installation/Ubuntu)
+ * [rosserial_arduino](http://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup)
+ * [OpenCV C++](https://opencv.org/)
+ * [Tkinter](https://docs.python.org/3/library/tkinter.html)
+ * [APScheduler](https://apscheduler.readthedocs.io/en/stable/)
+ 
+To install ROS and rosserial_arduino, follow the links above and install as normal, for everything else, do the following:
+
+```bash
+sudo apt install libopencv-dev python3-opencv # OpenCV
+sudo apt install python-tk # Tkinter
+pip install APScheduler  # APScheduler
+```
  
 ### Build
 To build the system do the following:
