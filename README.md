@@ -1,6 +1,8 @@
 # AutoPinball
 A custom pinball machine that plays itself!
 
+[Checkout the full Instructables post!](<INSTRUCTABLES>)
+
 Check out the video here:  
 [![AutoPinball Video](http://img.youtube.com/vi/dy7oVSNtaRk/0.jpg)](https://www.youtube.com/watch?v=dy7oVSNtaRk "AutoPinball")
 
