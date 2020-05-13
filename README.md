@@ -31,7 +31,7 @@ make
 source devel/setup.bash
 ```
 
-After you build it, you can put the `source` command into your `~/.bashrc` to have it automatically source the directory whenever you start up a new bash shell. Just make sure that you give the full path, ex: 
+After you build it, you can put the `source` command into your `~/.bashrc` to have it automatically source the directory whenever you start up a new bash shell. Just make sure that you give the full path, ex:  
 `/home/<my-username>/AutoPinball/build/devel/setup.bash`
 
 ### RUN IT!
