@@ -1,7 +1,7 @@
 # AutoPinball
 A custom pinball machine that plays itself!
 
-[Checkout the full Instructables post!](<INSTRUCTABLES>)
+[Checkout the full Instructables post!](https://www.instructables.com/id/Arduino-Pinball-Machine-That-Plays-Itself)
 
 Check out the video here:  
 [![AutoPinball Video](http://img.youtube.com/vi/dy7oVSNtaRk/0.jpg)](https://www.youtube.com/watch?v=dy7oVSNtaRk "AutoPinball")
