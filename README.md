@@ -6,6 +6,9 @@ A custom pinball machine that plays itself!
 Check out the video here:  
 [![AutoPinball Video](http://img.youtube.com/vi/dy7oVSNtaRk/0.jpg)](https://www.youtube.com/watch?v=dy7oVSNtaRk "AutoPinball")
 
+Straight up demonstration of the autonomy here:  
+[![AutoPinball Demonstration](http://img.youtube.com/vi/hW7z0yfWGfI/0.jpg)](https://www.youtube.com/watch?v=hW7z0yfWGfI "AutoPinball")
+
 ### Dependencies
 This repo has the following dependencies that must be installed.
  * [ROS](http://wiki.ros.org/melodic/Installation/Ubuntu)
